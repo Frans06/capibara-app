@@ -55,3 +55,26 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+  delpoy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: "capibara-auth" # Replace with your Cloudflare Pages project name
+          directory: "./apps/auth-proxy" # The build output directory
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

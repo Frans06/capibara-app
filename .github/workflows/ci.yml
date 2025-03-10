@@ -55,8 +55,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
-  delpoy:
+  deploy:
     runs-on: ubuntu-latest
+    needs: [typecheck, format, lint]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

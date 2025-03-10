@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "NITRO_PRESET=cloudflare_pages nitro build",
-    "clean": "git clean -xdf .cache .nitro .output .turbo .vercel node_modules",
+    "clean": "git clean -xdf .cache .nitro .output .turbo .dist .vercel node_modules",
     "lint": "eslint",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "typecheck": "tsc --noEmit"

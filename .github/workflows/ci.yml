@@ -65,9 +65,6 @@ jobs:
       - name: Setup
         uses: ./tooling/github/setup
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Build project
         run: pnpm run build
 

@@ -26,6 +26,7 @@
     "next-auth": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
+    "wrangler": "^3.114.0",
     "zod": "catalog:"
   },
   "devDependencies": {

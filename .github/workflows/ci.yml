@@ -71,11 +71,9 @@ jobs:
       - name: Build project
         run: pnpm run build
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+      - name: Deploy to Cloudflare Pages using Wrangler
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: "capibara-auth" # Replace with your Cloudflare Pages project name
-          directory: "./apps/auth-proxy" # The build output directory
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy nitro --project-name "capibara-auth"

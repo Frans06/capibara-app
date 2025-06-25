@@ -31,7 +31,8 @@
     "@turbo/gen": "^2.5.4",
     "prettier": "catalog:",
     "turbo": "^2.5.4",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "^4.21.2"
   },
   "prettier": "@acme/prettier-config"
 }

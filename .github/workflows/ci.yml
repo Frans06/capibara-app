@@ -55,3 +55,23 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [typecheck, format, lint]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Deploy to Cloudflare Pages using Wrangler
+        uses: cloudflare/wrangler-action@v3.9.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./apps/auth-proxy
+          command: pages deploy dist/ --project-name=capibara-auth

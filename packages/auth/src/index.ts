@@ -30,12 +30,8 @@ export function initAuth(options: {
       }),
       expo(),
     ],
-    socialProviders: {
-      discord: {
-        clientId: options.discordClientId,
-        clientSecret: options.discordClientSecret,
-        redirectURI: `${options.productionUrl}/api/auth/callback/discord`,
-      },
+    emailAndPassword: {
+      enabled: true,
     },
     trustedOrigins: ["expo://"],
   } satisfies BetterAuthOptions;

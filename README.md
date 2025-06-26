@@ -89,6 +89,9 @@ pnpm i
 # There is an `.env.example` in the root directory you can use for reference
 cp .env.example .env
 
+# Init db with docker
+docker compose up -d
+
 # Push the Drizzle schema to the database
 pnpm db:push
 ```

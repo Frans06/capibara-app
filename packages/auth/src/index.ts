@@ -10,9 +10,6 @@ export function initAuth(options: {
   baseUrl: string;
   productionUrl: string;
   secret: string | undefined;
-
-  discordClientId: string;
-  discordClientSecret: string;
 }) {
   const config = {
     database: drizzleAdapter(db, {

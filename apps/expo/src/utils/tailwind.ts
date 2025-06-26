@@ -20,19 +20,19 @@ export function useColorScheme() {
 
 export const NAV_THEME = {
   light: {
-    background: "oklch(1 0 0)", // background
-    border: "oklch(0.92 0 0)", // border
-    card: "oklch(1 0 0)", // card
-    notification: "oklch(0.58 0.22 25)", // destructive
-    primary: "oklch(0.22 0.02 80)", // primary
-    text: "oklch(0.22 0.02 80)", // foreground
+    background: "hsl(0 0% 100%)", // --background (white)
+    border: "hsl(0 0% 90%)", // --border (light-gray)
+    card: "hsl(0 0% 100%)", // --card (white)
+    notification: "hsl(11 35% 58%)", // --destructive (old-rose)
+    primary: "hsl(4 35% 8%)", // --primary (licorice)
+    text: "hsl(4 35% 8%)", // --foreground (licorice)
   },
   dark: {
-    background: "oklch(0.22 0.02 80)", // background
-    border: "oklch(0.56 0.01 358)", // border
-    card: "oklch(0.25 0 0)", // card
-    notification: "oklch(0.65 0.25 25)", // destructive
-    primary: "oklch(0.85 0.13 50)", // primary
-    text: "oklch(1 0 0)", // foreground
+    background: "hsl(4 35% 8%)", // --background (licorice)
+    border: "hsl(10 8% 15%)", // --border (raisin-black)
+    card: "hsl(4 35% 8%)", // --card (licorice)
+    notification: "hsl(11 35% 58%)", // --destructive (old-rose)
+    primary: "hsl(0 0% 100%)", // --primary (white)
+    text: "hsl(0 0% 100%)", // --foreground (white)
   },
 };

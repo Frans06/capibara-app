@@ -4,89 +4,63 @@
 
 @layer base {
   :root {
-    --radius: 0.625rem;
+    /* New color palette */
+    --atomic-tangerine: 18 92% 69%;
+    --beaver: 17 29% 56%;
+    --gray: 330 1% 49%;
+    --silver: 240 1% 69%;
+    --smoky-black: 36 25% 8%;
+    --peach: 25 100% 77%;
 
-    /* Provided palette converted to OKLCH */
-    --atomic-tangerine: oklch(0.78 0.16 40);
-    --beaver: oklch(0.62 0.05 40);
-    --gray: oklch(0.56 0.01 358);
-    --silver: oklch(0.76 0.01 259);
-    --smoky-black: oklch(0.22 0.02 80);
-    --peach: oklch(0.85 0.13 50);
+    /* Added colors */
+    --white: 0 0% 100%;
+    --black: 0 0% 0%;
+    --dark-gray: 240 3.7% 15.9%;
+    --destructive-light: 0 84.2% 60.2%;
+    --destructive-dark: 0 72% 51%;
 
-    /* Additional colors */
-    --white: oklch(1 0 0);
-    --black: oklch(0 0 0);
-    --light-gray: oklch(0.92 0 0);
-    --dark-gray: oklch(0.25 0 0);
-    --destructive-red: oklch(0.58 0.22 25);
-
-    /* Light Theme */
-    --background: var(--white);
+    /* Light theme */
+    --background: var(--peach);
     --foreground: var(--smoky-black);
     --card: var(--white);
     --card-foreground: var(--smoky-black);
     --popover: var(--white);
     --popover-foreground: var(--smoky-black);
-    --primary: var(--smoky-black);
-    --primary-foreground: var(--white);
-    --secondary: var(--silver);
-    --secondary-foreground: var(--smoky-black);
+    --primary: var(--atomic-tangerine);
+    --primary-foreground: var(--smoky-black);
+    --secondary: var(--beaver);
+    --secondary-foreground: var(--white);
     --muted: var(--silver);
     --muted-foreground: var(--gray);
-    --accent: var(--peach);
+    --accent: var(--silver);
     --accent-foreground: var(--smoky-black);
-    --destructive: var(--destructive-red);
-    --border: var(--light-gray);
-    --input: var(--light-gray);
-    --ring: var(--gray);
-    --chart-1: var(--atomic-tangerine);
-    --chart-2: var(--beaver);
-    --chart-3: var(--silver);
-    --chart-4: var(--peach);
-    --chart-5: var(--gray);
-    --sidebar: var(--peach);
-    --sidebar-foreground: var(--smoky-black);
-    --sidebar-primary: var(--smoky-black);
-    --sidebar-primary-foreground: var(--white);
-    --sidebar-accent: var(--atomic-tangerine);
-    --sidebar-accent-foreground: var(--smoky-black);
-    --sidebar-border: var(--light-gray);
-    --sidebar-ring: var(--gray);
-    --radius: 0.5rem;
+    --destructive: var(--destructive-light);
+    --destructive-foreground: var(--white);
+    --border: var(--silver);
+    --input: var(--silver);
+    --ring: var(--atomic-tangerine);
   }
 
   .dark {
+    /* Dark theme */
     --background: var(--smoky-black);
-    --foreground: var(--white);
-    --card: var(--dark-gray);
-    --card-foreground: var(--white);
-    --popover: var(--dark-gray);
-    --popover-foreground: var(--white);
-    --primary: var(--peach);
+    --foreground: var(--peach);
+    --card: var(--smoky-black);
+    --card-foreground: var(--peach);
+    --popover: var(--smoky-black);
+    --popover-foreground: var(--peach);
+    --primary: var(--atomic-tangerine);
     --primary-foreground: var(--smoky-black);
-    --secondary: var(--gray);
+    --secondary: var(--beaver);
     --secondary-foreground: var(--white);
-    --muted: var(--gray);
+    --muted: var(--dark-gray);
     --muted-foreground: var(--silver);
     --accent: var(--atomic-tangerine);
     --accent-foreground: var(--smoky-black);
-    --destructive: oklch(0.65 0.25 25); /* Brighter red for dark mode */
-    --border: var(--gray);
-    --input: var(--gray);
-    --ring: var(--silver);
-    --chart-1: oklch(0.82 0.16 40); /* Brighter versions */
-    --chart-2: oklch(0.68 0.05 40);
-    --chart-3: oklch(0.82 0.01 259);
-    --chart-4: oklch(0.88 0.13 50);
-    --chart-5: oklch(0.65 0.01 358);
-    --sidebar: var(--dark-gray);
-    --sidebar-foreground: var(--white);
-    --sidebar-primary: var(--peach);
-    --sidebar-primary-foreground: var(--smoky-black);
-    --sidebar-accent: var(--atomic-tangerine);
-    --sidebar-accent-foreground: var(--smoky-black);
-    --sidebar-border: var(--gray);
-    --sidebar-ring: var(--silver);
+    --destructive: var(--destructive-dark);
+    --destructive-foreground: var(--white);
+    --border: var(--dark-gray);
+    --input: var(--dark-gray);
+    --ring: var(--atomic-tangerine);
   }
 }

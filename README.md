@@ -93,7 +93,7 @@ cp .env.example .env
 docker compose up -d
 
 # Push the Drizzle schema to the database
-pnpm db:push
+pnpm db:migrate
 ```
 
 ### 2. Configure Expo `dev`-script

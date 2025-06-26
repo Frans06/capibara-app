@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,27 +10,23 @@ import {
 import { useRouter } from "expo-router";
 import { useForm } from "@tanstack/react-form";
 
-import { loginValidator } from "@capibara/validators";
+import { signupValidator } from "@capibara/validators";
 
 import { Button } from "~/components/elements/ui/button";
 import { Input } from "~/components/elements/ui/input";
 import { authClient } from "~/utils/auth";
 
-export default function Login() {
+export default function SignUp() {
   const router = useRouter();
-  const { data: session } = authClient.useSession();
-  useEffect(() => {
-    console.log(session);
-  }, [session]);
   const form = useForm({
-    defaultValues: { email: "", password: "" },
-    validators: { onChange: loginValidator() },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    validators: { onChange: signupValidator() },
     onSubmit: async ({ value }) => {
-      await authClient.signIn.email({
+      const res = await authClient.signUp.email({
         email: value.email,
         password: value.password,
+        name: value.name,
       });
-      router.replace("/(app)");
     },
   });
 
@@ -44,15 +40,40 @@ export default function Login() {
           {/* Header */}
           <View className="mb-8">
             <Text className="mb-2 text-center text-3xl font-bold text-foreground">
-              Login{" "}
+              Sign Up
             </Text>
             <Text className="text-center text-base text-gray-600">
-              Login in to get started
+              Create an account to get started
             </Text>
           </View>
 
           {/* Form */}
           <View className="flex flex-col gap-8 space-y-4">
+            {/* Name Input */}
+            <View>
+              <Text className="mb-2 text-sm font-medium text-gray-700">
+                Name
+              </Text>
+              <form.Field name="name">
+                {(field) => (
+                  <>
+                    <Input
+                      placeholder="Enter your name"
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                    />
+                    {!field.state.meta.isValid && (
+                      <Text className="mt-1 text-xs text-red-500">
+                        {field.state.meta.errors
+                          .map((e) => e?.message)
+                          .join(", ")}
+                      </Text>
+                    )}
+                  </>
+                )}
+              </form.Field>
+            </View>
+
             {/* Email Input */}
             <View>
               <Text className="mb-2 text-sm font-medium text-gray-700">
@@ -70,7 +91,7 @@ export default function Login() {
                       autoCorrect={false}
                     />
                     {!field.state.meta.isValid && (
-                      <Text>
+                      <Text className="mt-1 text-xs text-red-500">
                         {field.state.meta.errors
                           .map((e) => e?.message)
                           .join(", ")}
@@ -98,7 +119,35 @@ export default function Login() {
                       autoCorrect={false}
                     />
                     {!field.state.meta.isValid && (
-                      <Text>
+                      <Text className="mt-1 text-xs text-red-500">
+                        {field.state.meta.errors
+                          .map((e) => e?.message)
+                          .join(", ")}
+                      </Text>
+                    )}
+                  </>
+                )}
+              </form.Field>
+            </View>
+
+            {/* Confirm Password Input */}
+            <View>
+              <Text className="mb-2 text-sm font-medium text-gray-700">
+                Confirm Password
+              </Text>
+              <form.Field name="confirmPassword">
+                {(field) => (
+                  <>
+                    <Input
+                      placeholder="Confirm your password"
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      secureTextEntry
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                    {!field.state.meta.isValid && (
+                      <Text className="mt-1 text-xs text-red-500">
                         {field.state.meta.errors
                           .map((e) => e?.message)
                           .join(", ")}
@@ -119,7 +168,7 @@ export default function Login() {
                   size={"lg"}
                   variant={"secondary"}
                 >
-                  <Text>{isSubmitting ? "Loading..." : "Sign In"}</Text>
+                  <Text>{isSubmitting ? "Loading..." : "Sign Up"}</Text>
                 </Button>
               )}
             />
@@ -127,11 +176,11 @@ export default function Login() {
             {/* Toggle Auth Mode */}
             <View className="mt-6 flex-row items-center justify-center">
               <Text className="text-base text-gray-600">
-                Don't have an account?
+                Already have an account?
               </Text>
-              <TouchableOpacity onPress={() => router.replace("/signup")}>
+              <TouchableOpacity onPress={() => router.replace("/login")}>
                 <Text className="text-base font-semibold text-accent">
-                  Sign Up
+                  Sign In
                 </Text>
               </TouchableOpacity>
             </View>

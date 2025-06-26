@@ -12,7 +12,6 @@ import { queryClient } from "~/utils/api";
 import "../global.css";
 
 import React from "react";
-import { Platform } from "react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { SplashScreenController } from "~/components/containers/splash";
@@ -58,7 +57,7 @@ function RootNavigator() {
   const { data: session } = authClient.useSession();
   return (
     <Stack>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={Boolean(session)}>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
       </Stack.Protected>
 

@@ -4,89 +4,62 @@
 
 @layer base {
   :root {
-    --radius: 0.625rem;
+    /* Define new palette */
+    --white: 0 0% 100%;
+    --silver: 0 0% 69%;
+    --pale-dogwood: 21 20% 75%;
+    --peach: 25 100% 78%;
+    --atomic-tangerine: 18 91% 69%;
+    --old-rose: 11 35% 58%;
+    --gray: 330 1% 48%;
+    --raisin-black: 10 8% 15%;
+    --licorice: 4 35% 8%;
 
-    /* Provided palette converted to OKLCH */
-    --atomic-tangerine: oklch(0.78 0.16 40);
-    --beaver: oklch(0.62 0.05 40);
-    --gray: oklch(0.56 0.01 358);
-    --silver: oklch(0.76 0.01 259);
-    --smoky-black: oklch(0.22 0.02 80);
-    --peach: oklch(0.85 0.13 50);
+    /* Added color for light borders */
+    --light-gray: 0 0% 90%;
 
-    /* Additional colors */
-    --white: oklch(1 0 0);
-    --black: oklch(0 0 0);
-    --light-gray: oklch(0.92 0 0);
-    --dark-gray: oklch(0.25 0 0);
-    --destructive-red: oklch(0.58 0.22 25);
-
-    /* Light Theme */
+    /* Light theme assignments */
     --background: var(--white);
-    --foreground: var(--smoky-black);
+    --foreground: var(--licorice);
     --card: var(--white);
-    --card-foreground: var(--smoky-black);
+    --card-foreground: var(--licorice);
     --popover: var(--white);
-    --popover-foreground: var(--smoky-black);
-    --primary: var(--smoky-black);
+    --popover-foreground: var(--licorice);
+    --primary: var(--licorice);
     --primary-foreground: var(--white);
-    --secondary: var(--silver);
-    --secondary-foreground: var(--smoky-black);
-    --muted: var(--silver);
+    --secondary: var(--pale-dogwood);
+    --secondary-foreground: var(--licorice);
+    --muted: var(--pale-dogwood);
     --muted-foreground: var(--gray);
     --accent: var(--peach);
-    --accent-foreground: var(--smoky-black);
-    --destructive: var(--destructive-red);
+    --accent-foreground: var(--licorice);
+    --destructive: var(--old-rose);
+    --destructive-foreground: var(--white);
     --border: var(--light-gray);
     --input: var(--light-gray);
-    --ring: var(--gray);
-    --chart-1: var(--atomic-tangerine);
-    --chart-2: var(--beaver);
-    --chart-3: var(--silver);
-    --chart-4: var(--peach);
-    --chart-5: var(--gray);
-    --sidebar: var(--peach);
-    --sidebar-foreground: var(--smoky-black);
-    --sidebar-primary: var(--smoky-black);
-    --sidebar-primary-foreground: var(--white);
-    --sidebar-accent: var(--atomic-tangerine);
-    --sidebar-accent-foreground: var(--smoky-black);
-    --sidebar-border: var(--light-gray);
-    --sidebar-ring: var(--gray);
-    --radius: 0.5rem;
+    --ring: var(--licorice);
   }
 
   .dark {
-    --background: var(--smoky-black);
+    /* Dark theme assignments */
+    --background: var(--licorice);
     --foreground: var(--white);
-    --card: var(--dark-gray);
+    --card: var(--licorice);
     --card-foreground: var(--white);
-    --popover: var(--dark-gray);
+    --popover: var(--licorice);
     --popover-foreground: var(--white);
-    --primary: var(--peach);
-    --primary-foreground: var(--smoky-black);
-    --secondary: var(--gray);
+    --primary: var(--white);
+    --primary-foreground: var(--licorice);
+    --secondary: var(--raisin-black);
     --secondary-foreground: var(--white);
-    --muted: var(--gray);
-    --muted-foreground: var(--silver);
-    --accent: var(--atomic-tangerine);
-    --accent-foreground: var(--smoky-black);
-    --destructive: oklch(0.65 0.25 25); /* Brighter red for dark mode */
-    --border: var(--gray);
-    --input: var(--gray);
+    --muted: var(--raisin-black);
+    --muted-foreground: var(--gray);
+    --accent: var(--raisin-black);
+    --accent-foreground: var(--white);
+    --destructive: var(--old-rose);
+    --destructive-foreground: var(--white);
+    --border: var(--raisin-black);
+    --input: var(--raisin-black);
     --ring: var(--silver);
-    --chart-1: oklch(0.82 0.16 40); /* Brighter versions */
-    --chart-2: oklch(0.68 0.05 40);
-    --chart-3: oklch(0.82 0.01 259);
-    --chart-4: oklch(0.88 0.13 50);
-    --chart-5: oklch(0.65 0.01 358);
-    --sidebar: var(--dark-gray);
-    --sidebar-foreground: var(--white);
-    --sidebar-primary: var(--peach);
-    --sidebar-primary-foreground: var(--smoky-black);
-    --sidebar-accent: var(--atomic-tangerine);
-    --sidebar-accent-foreground: var(--smoky-black);
-    --sidebar-border: var(--gray);
-    --sidebar-ring: var(--silver);
   }
 }

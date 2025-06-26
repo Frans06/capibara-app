@@ -13,6 +13,8 @@
     "auth:generate": "pnpm -F @capibara/auth generate",
     "db:push": "turbo -F @capibara/db push",
     "db:studio": "turbo -F @capibara/db studio",
+    "db:generate": "turbo -F @capibara/db generatem",
+    "db:migrate": "turbo -F @capibara/db migrate",
     "dev": "turbo watch dev --continue",
     "dev:next": "turbo watch dev -F @capibara/nextjs...",
     "format": "turbo run format --continue -- --cache --cache-location .cache/.prettiercache",

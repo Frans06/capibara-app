@@ -36,6 +36,14 @@
       "cache": false,
       "interactive": true
     },
+    "generatem": {
+      "cache": false,
+      "interactive": true
+    },
+    "migrate": {
+      "cache": false,
+      "interactive": true
+    },
     "studio": {
       "cache": false,
       "persistent": true

@@ -8,13 +8,15 @@ export const cn = (...inputs: ClassValue[]) => {
 };
 
 export const useColorScheme = () => {
+  /* eslint-disable-next-line  @typescript-eslint/unbound-method */
   const { colorScheme, setColorScheme, toggleColorScheme } =
     useNativewindColorScheme();
+
   return {
     colorScheme: colorScheme ?? "dark",
     isDarkColorScheme: colorScheme === "dark",
-    setColorScheme: (scheme: "light" | "dark") => setColorScheme(scheme),
-    toggleColorScheme: () => toggleColorScheme(),
+    setColorScheme,
+    toggleColorScheme,
   };
 };
 

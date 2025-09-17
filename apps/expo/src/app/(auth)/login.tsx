@@ -114,7 +114,7 @@ export default function Login() {
               selector={(state) => [state.canSubmit, state.isSubmitting]}
               children={([canSubmit, isSubmitting]) => (
                 <Button
-                  onPress={form.handleSubmit}
+                  onPress={() => form.handleSubmit()}
                   disabled={!canSubmit || isSubmitting}
                   size={"lg"}
                   variant={"secondary"}

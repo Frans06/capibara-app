@@ -22,7 +22,7 @@ export default function SignUp() {
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
     validators: { onChange: signupValidator() },
     onSubmit: async ({ value }) => {
-      const res = await authClient.signUp.email({
+      await authClient.signUp.email({
         email: value.email,
         password: value.password,
         name: value.name,
@@ -163,7 +163,7 @@ export default function SignUp() {
               selector={(state) => [state.canSubmit, state.isSubmitting]}
               children={([canSubmit, isSubmitting]) => (
                 <Button
-                  onPress={form.handleSubmit}
+                  onPress={() => form.handleSubmit()}
                   disabled={!canSubmit || isSubmitting}
                   size={"lg"}
                   variant={"secondary"}

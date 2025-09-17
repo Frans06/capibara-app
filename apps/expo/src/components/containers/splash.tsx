@@ -6,7 +6,7 @@ export function SplashScreenController() {
   const { isPending } = authClient.useSession();
 
   if (!isPending) {
-    SplashScreen.hideAsync();
+    void SplashScreen.hideAsync();
   }
 
   return null;

@@ -44,6 +44,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-secure-store",
     "expo-web-browser",
     [
+      "expo-image-picker",
+      {
+        photosPermission:
+          "Allow Capibara to access your photos to scan receipts.",
+        cameraPermission:
+          "Allow Capibara to use your camera to scan receipts.",
+      },
+    ],
+    [
       "expo-splash-screen",
       {
         backgroundColor: "#E4E4E7",

@@ -26,9 +26,20 @@ import { db } from "@capibara/db/client";
  * @see https://trpc.io/docs/server/context
  */
 
+export interface R2Service {
+  createUploadUrl: (key: string, contentType: string) => Promise<string>;
+  getImageAsBase64: (key: string) => Promise<string>;
+}
+
+export interface AIService {
+  runVisionModel: (imageBase64: string, prompt: string) => Promise<string>;
+}
+
 export const createTRPCContext = async (opts: {
   headers: Headers;
   auth: Auth;
+  r2?: R2Service;
+  ai?: AIService;
 }) => {
   const authApi = opts.auth.api;
   const session = await authApi.getSession({
@@ -38,6 +49,8 @@ export const createTRPCContext = async (opts: {
     authApi,
     session,
     db,
+    r2: opts.r2,
+    ai: opts.ai,
   };
 };
 /**

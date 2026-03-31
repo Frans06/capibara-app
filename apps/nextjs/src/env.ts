@@ -17,6 +17,12 @@ export const env = createEnv({
    */
   server: {
     POSTGRES_URL: z.url(),
+    CF_ACCOUNT_ID: z.string(),
+    CF_API_TOKEN: z.string(),
+    R2_ACCESS_KEY_ID: z.string(),
+    R2_SECRET_ACCESS_KEY: z.string(),
+    R2_BUCKET_NAME: z.string(),
+    R2_ENDPOINT: z.url(),
   },
 
   /**

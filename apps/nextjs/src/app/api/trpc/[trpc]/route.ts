@@ -4,6 +4,8 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter, createTRPCContext } from "@capibara/api";
 
 import { auth } from "~/auth/server";
+import { createUploadUrl, getImageAsBase64 } from "~/lib/r2";
+import { runVisionModel } from "~/lib/workers-ai";
 
 /**
  * Configure basic CORS headers
@@ -33,6 +35,8 @@ const handler = async (req: NextRequest) => {
       createTRPCContext({
         auth: auth,
         headers: req.headers,
+        r2: { createUploadUrl, getImageAsBase64 },
+        ai: { runVisionModel },
       }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);

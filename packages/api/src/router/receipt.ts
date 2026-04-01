@@ -99,7 +99,7 @@ export const receiptRouter = {
         })
         .returning();
       if (!receipt) {
-        return new TRPCError({
+        throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create receipt record",
         });

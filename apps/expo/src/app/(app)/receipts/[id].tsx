@@ -9,9 +9,7 @@ export default function ReceiptDetail() {
   const { id } = useGlobalSearchParams();
   if (!id || typeof id !== "string") throw new Error("unreachable");
 
-  const { data, isLoading } = useQuery(
-    trpc.receipt.byId.queryOptions({ id }),
-  );
+  const { data, isLoading } = useQuery(trpc.receipt.byId.queryOptions({ id }));
 
   if (isLoading) {
     return (
@@ -31,7 +29,7 @@ export default function ReceiptDetail() {
       ? "$"
       : data.currency === "EUR"
         ? "\u20AC"
-        : data.currency ?? "$";
+        : (data.currency ?? "$");
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -44,7 +42,7 @@ export default function ReceiptDetail() {
       <ScrollView className="flex-1 p-4">
         <View className="gap-4">
           {/* Header */}
-          <View className="rounded-lg bg-muted p-4 gap-2">
+          <View className="gap-2 rounded-lg bg-muted p-4">
             <Text className="text-2xl font-bold text-foreground">
               {data.merchantName ?? "Unknown merchant"}
             </Text>
@@ -60,7 +58,7 @@ export default function ReceiptDetail() {
 
           {/* Line Items */}
           {data.items.length > 0 ? (
-            <View className="rounded-lg bg-muted p-4 gap-3">
+            <View className="gap-3 rounded-lg bg-muted p-4">
               <Text className="text-lg font-semibold text-foreground">
                 Items
               </Text>
@@ -93,7 +91,7 @@ export default function ReceiptDetail() {
 
           {/* Total */}
           {data.totalAmount ? (
-            <View className="rounded-lg bg-primary/10 p-4 flex-row items-center justify-between">
+            <View className="flex-row items-center justify-between rounded-lg bg-primary/10 p-4">
               <Text className="text-lg font-semibold text-foreground">
                 Total
               </Text>

@@ -59,7 +59,7 @@ export default function ReceiptsList() {
             </Text>
             <Link asChild href="/scan">
               <Pressable className="mt-4 rounded-lg bg-primary px-6 py-3">
-                <Text className="text-primary-foreground font-semibold">
+                <Text className="font-semibold text-primary-foreground">
                   Scan your first receipt
                 </Text>
               </Pressable>

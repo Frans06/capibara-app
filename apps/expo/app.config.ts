@@ -48,8 +48,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         photosPermission:
           "Allow Capibara to access your photos to scan receipts.",
-        cameraPermission:
-          "Allow Capibara to use your camera to scan receipts.",
+        cameraPermission: "Allow Capibara to use your camera to scan receipts.",
       },
     ],
     [

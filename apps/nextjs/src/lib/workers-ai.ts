@@ -5,7 +5,7 @@ interface WorkersAIResponse {
     response: string;
   };
   success: boolean;
-  errors: Array<{ message: string }>;
+  errors: { message: string }[];
 }
 
 export async function runVisionModel(

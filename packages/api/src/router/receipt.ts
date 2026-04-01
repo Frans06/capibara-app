@@ -37,12 +37,12 @@ interface ParsedReceipt {
   merchant_name: string | null;
   receipt_date: string | null;
   currency: string | null;
-  items: Array<{
+  items: {
     description: string;
     quantity: number;
     unit_price: number | null;
     total_price: number;
-  }>;
+  }[];
   total_amount: number;
 }
 

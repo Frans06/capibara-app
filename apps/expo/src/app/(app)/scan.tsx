@@ -8,8 +8,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { router, Stack } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { trpc } from "~/utils/api";
@@ -26,9 +26,7 @@ export default function ScanReceipt() {
     trpc.receipt.scan.mutationOptions({
       onSuccess: (data) => {
         if (data.success) {
-          void queryClient.invalidateQueries(
-            trpc.receipt.list.queryFilter(),
-          );
+          void queryClient.invalidateQueries(trpc.receipt.list.queryFilter());
           router.push({
             pathname: "/receipts/[id]",
             params: { id: data.receiptId },
@@ -115,7 +113,7 @@ export default function ScanReceipt() {
   return (
     <SafeAreaView className="flex-1 bg-background">
       <Stack.Screen options={{ title: "Scan Receipt", headerShown: true }} />
-      <View className="flex-1 p-4 gap-4">
+      <View className="flex-1 gap-4 p-4">
         {imageUri ? (
           <Image
             source={{ uri: imageUri }}
@@ -123,8 +121,8 @@ export default function ScanReceipt() {
             resizeMode="contain"
           />
         ) : (
-          <View className="w-full flex-1 rounded-lg bg-muted items-center justify-center">
-            <Text className="text-muted-foreground text-lg">
+          <View className="w-full flex-1 items-center justify-center rounded-lg bg-muted">
+            <Text className="text-lg text-muted-foreground">
               Take a photo or pick from gallery
             </Text>
           </View>
@@ -143,7 +141,7 @@ export default function ScanReceipt() {
             disabled={isLoading}
             className="flex-1 items-center rounded-lg bg-primary p-4"
           >
-            <Text className="text-primary-foreground font-semibold">
+            <Text className="font-semibold text-primary-foreground">
               Camera
             </Text>
           </Pressable>
@@ -152,7 +150,7 @@ export default function ScanReceipt() {
             disabled={isLoading}
             className="flex-1 items-center rounded-lg border border-input bg-background p-4"
           >
-            <Text className="text-foreground font-semibold">Gallery</Text>
+            <Text className="font-semibold text-foreground">Gallery</Text>
           </Pressable>
         </View>
 
@@ -161,7 +159,7 @@ export default function ScanReceipt() {
             onPress={uploadAndScan}
             className="items-center rounded-lg bg-primary p-4"
           >
-            <Text className="text-primary-foreground font-bold text-lg">
+            <Text className="text-lg font-bold text-primary-foreground">
               Scan Receipt
             </Text>
           </Pressable>

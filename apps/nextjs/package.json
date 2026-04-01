@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "pnpm with-env next build",
-    "clean": "git clean -xdf .cache .next .turbo node_modules",
+    "clean": "git clean -xdf .cache .next .open-next .turbo node_modules",
     "dev": "pnpm with-env next dev --turbopack",
+    "preview": "pnpm with-env opennextjs-cloudflare build && pnpm with-env opennextjs-cloudflare preview",
+    "cf:build": "pnpm with-env opennextjs-cloudflare build",
+    "cf:deploy": "pnpm with-env opennextjs-cloudflare deploy",
     "format": "prettier --check . --ignore-path ../../.gitignore",
     "lint": "eslint",
     "start": "pnpm with-env next start",
@@ -37,6 +40,7 @@
     "@capibara/prettier-config": "workspace:*",
     "@capibara/tailwind-config": "workspace:*",
     "@capibara/tsconfig": "workspace:*",
+    "@opennextjs/cloudflare": "^1.18.0",
     "@types/node": "^22.15.29",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
@@ -45,7 +49,8 @@
     "jiti": "^2.4.2",
     "prettier": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "^4.21.2"
   },
   "prettier": "@capibara/prettier-config"
 }

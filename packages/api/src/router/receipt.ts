@@ -98,8 +98,13 @@ export const receiptRouter = {
           status: "pending",
         })
         .returning();
-
-      return { uploadUrl, receiptId: receipt!.id, key };
+      if (!receipt) {
+        return new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create receipt record",
+        });
+      }
+      return { uploadUrl, receiptId: receipt.id, key };
     }),
 
   scan: protectedProcedure
@@ -151,7 +156,7 @@ export const receiptRouter = {
           .update(Receipt)
           .set({
             merchantName: parsed.merchant_name,
-            totalAmount: parsed.total_amount?.toString(),
+            totalAmount: parsed.total_amount.toString(),
             currency: parsed.currency ?? "USD",
             receiptDate: parsed.receipt_date,
             rawAiResponse: parsed,
@@ -159,14 +164,14 @@ export const receiptRouter = {
           })
           .where(eq(Receipt.id, input.receiptId));
 
-        if (parsed.items?.length) {
+        if (parsed.items.length) {
           await ctx.db.insert(ReceiptItem).values(
             parsed.items.map((item) => ({
               receiptId: input.receiptId,
               description: item.description,
-              quantity: item.quantity?.toString() ?? "1",
+              quantity: item.quantity.toString(),
               unitPrice: item.unit_price?.toString(),
-              totalPrice: item.total_price?.toString(),
+              totalPrice: item.total_price.toString(),
             })),
           );
         }

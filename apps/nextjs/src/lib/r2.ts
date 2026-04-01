@@ -34,6 +34,9 @@ export async function getImageAsBase64(key: string): Promise<string> {
     Key: key,
   });
   const response = await s3Client.send(command);
-  const bytes = await response.Body!.transformToByteArray();
+  if (!response.Body) {
+    return "";
+  }
+  const bytes = await response.Body.transformToByteArray();
   return Buffer.from(bytes).toString("base64");
 }

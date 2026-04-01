@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack } from "expo-router";
+import { Link } from "expo-router";
 import { LegendList } from "@legendapp/list";
 import { useQuery } from "@tanstack/react-query";
 
@@ -48,7 +48,6 @@ export default function ReceiptsList() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <Stack.Screen options={{ title: "Receipts", headerShown: true }} />
       <View className="flex-1 p-4">
         {isLoading ? (
           <Text className="text-center text-muted-foreground">Loading...</Text>

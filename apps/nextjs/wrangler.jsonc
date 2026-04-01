@@ -12,7 +12,7 @@
   "r2_buckets": [
     {
       "binding": "RECEIPT_BUCKET",
-      "bucket_name": "capibara-receipts",
+      "bucket_name": "receipts-capibara",
     },
   ],
   // Environment variables are set via Cloudflare Dashboard or wrangler secret

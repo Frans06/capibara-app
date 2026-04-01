@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { router, Stack } from "expo-router";
+import { router } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { trpc } from "~/utils/api";
@@ -112,7 +112,6 @@ export default function ScanReceipt() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <Stack.Screen options={{ title: "Scan Receipt", headerShown: true }} />
       <View className="flex-1 gap-4 p-4">
         {imageUri ? (
           <Image

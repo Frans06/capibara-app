@@ -65,6 +65,9 @@ jobs:
       - name: Setup
         uses: ./tooling/github/setup
 
+      - name: Build workspace packages
+        run: pnpm turbo run build --filter=@capibara/nextjs^...
+
       - name: Build and deploy to Cloudflare Workers
         working-directory: ./apps/nextjs
         env:
@@ -79,4 +82,4 @@ jobs:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: pnpm cf:build && pnpm cf:deploy
+        run: npx opennextjs-cloudflare build && npx wrangler deploy

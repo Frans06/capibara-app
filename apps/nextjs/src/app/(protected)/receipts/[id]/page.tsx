@@ -5,7 +5,19 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 import { cn } from "@capibara/ui";
+import { Badge } from "@capibara/ui/badge";
 import { Button } from "@capibara/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@capibara/ui/card";
+import { Skeleton } from "@capibara/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@capibara/ui/table";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -19,9 +31,9 @@ export default function ReceiptDetailPage() {
   if (isLoading) {
     return (
       <main className="container max-w-2xl py-16">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 rounded bg-muted" />
-          <div className="h-64 rounded-lg bg-muted" />
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 w-full" />
         </div>
       </main>
     );
@@ -58,75 +70,87 @@ export default function ReceiptDetailPage() {
 
       <div className="space-y-6">
         {/* Header */}
-        <div className="rounded-lg bg-muted p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">
-                {data.merchantName ?? "Unknown merchant"}
-              </h1>
-              {data.receiptDate ? (
-                <p className="mt-1 text-muted-foreground">
-                  {data.receiptDate}
-                </p>
-              ) : null}
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-2xl">
+                  {data.merchantName ?? "Unknown merchant"}
+                </CardTitle>
+                {data.receiptDate ? (
+                  <p className="mt-1 text-muted-foreground">
+                    {data.receiptDate}
+                  </p>
+                ) : null}
+              </div>
+              <Badge
+                className={cn(
+                  "capitalize",
+                  data.status === "completed"
+                    ? "border-green-500/20 bg-green-500/10 text-green-600"
+                    : data.status === "failed"
+                      ? "border-red-500/20 bg-red-500/10 text-red-600"
+                      : "border-yellow-500/20 bg-yellow-500/10 text-yellow-600",
+                )}
+              >
+                {data.status}
+              </Badge>
             </div>
-            <span
-              className={cn(
-                "rounded-full px-3 py-1 text-sm capitalize",
-                data.status === "completed"
-                  ? "bg-green-500/10 text-green-600"
-                  : data.status === "failed"
-                    ? "bg-red-500/10 text-red-600"
-                    : "bg-yellow-500/10 text-yellow-600",
-              )}
-            >
-              {data.status}
-            </span>
-          </div>
-        </div>
+          </CardHeader>
+        </Card>
 
         {/* Line Items */}
         {data.items.length > 0 ? (
-          <div className="rounded-lg bg-muted p-6">
-            <h2 className="mb-4 text-lg font-semibold">Items</h2>
-            <div className="space-y-3">
-              {data.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0"
-                >
-                  <div>
-                    <p>{item.description}</p>
-                    {item.quantity && Number(item.quantity) !== 1 ? (
-                      <p className="text-sm text-muted-foreground">
-                        Qty: {item.quantity}
+          <Card>
+            <CardHeader>
+              <CardTitle>Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.description}</TableCell>
+                      <TableCell className="text-right">
+                        {item.quantity ?? 1}
+                      </TableCell>
+                      <TableCell className="text-right">
                         {item.unitPrice
-                          ? ` x ${currencySymbol}${Number(item.unitPrice).toFixed(2)}`
-                          : ""}
-                      </p>
-                    ) : null}
-                  </div>
-                  {item.totalPrice ? (
-                    <span className="font-semibold">
-                      {currencySymbol}
-                      {Number(item.totalPrice).toFixed(2)}
-                    </span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {/* Total */}
-        {data.totalAmount ? (
-          <div className="flex items-center justify-between rounded-lg bg-primary/10 p-6">
-            <span className="text-lg font-semibold">Total</span>
-            <span className="text-2xl font-bold text-primary">
-              {currencySymbol}
-              {Number(data.totalAmount).toFixed(2)}
-            </span>
-          </div>
+                          ? `${currencySymbol}${Number(item.unitPrice).toFixed(2)}`
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {item.totalPrice
+                          ? `${currencySymbol}${Number(item.totalPrice).toFixed(2)}`
+                          : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                {data.totalAmount ? (
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-semibold">
+                        Total
+                      </TableCell>
+                      <TableCell className="text-right text-lg font-bold text-primary">
+                        {currencySymbol}
+                        {Number(data.totalAmount).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
+                ) : null}
+              </Table>
+            </CardContent>
+          </Card>
         ) : null}
       </div>
     </main>

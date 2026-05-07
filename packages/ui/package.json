@@ -11,7 +11,12 @@
     "./input": "./src/input.tsx",
     "./label": "./src/label.tsx",
     "./theme": "./src/theme.tsx",
-    "./toast": "./src/toast.tsx"
+    "./toast": "./src/toast.tsx",
+    "./card": "./src/card.tsx",
+    "./badge": "./src/badge.tsx",
+    "./table": "./src/table.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./separator": "./src/separator.tsx"
   },
   "license": "MIT",
   "scripts": {

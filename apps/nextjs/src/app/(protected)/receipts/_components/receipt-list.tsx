@@ -5,6 +5,9 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 
 import type { RouterOutputs } from "@capibara/api";
 import { cn } from "@capibara/ui";
+import { Badge } from "@capibara/ui/badge";
+import { Card, CardContent } from "@capibara/ui/card";
+import { Skeleton } from "@capibara/ui/skeleton";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -20,34 +23,36 @@ function ReceiptCard({ receipt }: { receipt: Receipt }) {
 
   return (
     <Link href={`/receipts/${receipt.id}`}>
-      <div className="flex items-center justify-between rounded-lg bg-muted p-4 transition-colors hover:bg-muted/80">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-semibold">
-            {receipt.merchantName ?? "Unknown merchant"}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {receipt.receiptDate ?? "No date"}
-          </p>
-          <span
-            className={cn(
-              "inline-block w-fit rounded-full px-2 py-0.5 text-xs capitalize",
-              receipt.status === "completed"
-                ? "bg-green-500/10 text-green-600"
-                : receipt.status === "failed"
-                  ? "bg-red-500/10 text-red-600"
-                  : "bg-yellow-500/10 text-yellow-600",
-            )}
-          >
-            {receipt.status}
-          </span>
-        </div>
-        {receipt.totalAmount ? (
-          <span className="text-xl font-bold">
-            {currencySymbol}
-            {Number(receipt.totalAmount).toFixed(2)}
-          </span>
-        ) : null}
-      </div>
+      <Card className="transition-colors hover:bg-muted/80">
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-lg font-semibold">
+              {receipt.merchantName ?? "Unknown merchant"}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {receipt.receiptDate ?? "No date"}
+            </p>
+            <Badge
+              className={cn(
+                "w-fit capitalize",
+                receipt.status === "completed"
+                  ? "border-green-500/20 bg-green-500/10 text-green-600"
+                  : receipt.status === "failed"
+                    ? "border-red-500/20 bg-red-500/10 text-red-600"
+                    : "border-yellow-500/20 bg-yellow-500/10 text-yellow-600",
+              )}
+            >
+              {receipt.status}
+            </Badge>
+          </div>
+          {receipt.totalAmount ? (
+            <span className="text-xl font-bold">
+              {currencySymbol}
+              {Number(receipt.totalAmount).toFixed(2)}
+            </span>
+          ) : null}
+        </CardContent>
+      </Card>
     </Link>
   );
 }
@@ -83,12 +88,14 @@ export function ReceiptList() {
 
 export function ReceiptCardSkeleton() {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-muted p-4">
-      <div className="flex flex-col gap-2">
-        <div className="h-5 w-40 animate-pulse rounded bg-primary/20" />
-        <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20" />
-      </div>
-      <div className="h-6 w-20 animate-pulse rounded bg-primary/20" />
-    </div>
+    <Card>
+      <CardContent className="flex items-center justify-between p-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+        <Skeleton className="h-6 w-20" />
+      </CardContent>
+    </Card>
   );
 }

@@ -8,8 +8,8 @@ import {
 
 import type { RouterOutputs } from "@capibara/api";
 import { CreatePostSchema } from "@capibara/db/schema";
-import { cn } from "@capibara/ui";
 import { Button } from "@capibara/ui/button";
+import { Card, CardContent } from "@capibara/ui/card";
 import {
   Form,
   FormControl,
@@ -19,6 +19,7 @@ import {
   useForm,
 } from "@capibara/ui/form";
 import { Input } from "@capibara/ui/input";
+import { Skeleton } from "@capibara/ui/skeleton";
 import { toast } from "@capibara/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
@@ -136,46 +137,42 @@ export function PostCard(props: {
   );
 
   return (
-    <div className="flex flex-row rounded-lg bg-muted p-4">
-      <div className="flex-grow">
-        <h2 className="text-2xl font-bold text-primary">{props.post.title}</h2>
-        <p className="mt-2 text-sm">{props.post.content}</p>
-      </div>
-      <div>
-        <Button
-          variant="ghost"
-          className="cursor-pointer text-sm font-bold uppercase text-primary hover:bg-transparent hover:text-white"
-          onClick={() => deletePost.mutate(props.post.id)}
-        >
-          Delete
-        </Button>
-      </div>
-    </div>
+    <Card>
+      <CardContent className="flex flex-row items-center p-4">
+        <div className="flex-grow">
+          <h2 className="text-2xl font-bold text-primary">
+            {props.post.title}
+          </h2>
+          <p className="mt-2 text-sm">{props.post.content}</p>
+        </div>
+        <div>
+          <Button
+            variant="ghost"
+            className="cursor-pointer text-sm font-bold uppercase text-primary hover:bg-transparent hover:text-white"
+            onClick={() => deletePost.mutate(props.post.id)}
+          >
+            Delete
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
 export function PostCardSkeleton(props: { pulse?: boolean }) {
   const { pulse = true } = props;
   return (
-    <div className="flex flex-row rounded-lg bg-muted p-4">
-      <div className="flex-grow">
-        <h2
-          className={cn(
-            "w-1/4 rounded bg-primary text-2xl font-bold",
-            pulse && "animate-pulse",
-          )}
-        >
-          &nbsp;
-        </h2>
-        <p
-          className={cn(
-            "mt-2 w-1/3 rounded bg-current text-sm",
-            pulse && "animate-pulse",
-          )}
-        >
-          &nbsp;
-        </p>
-      </div>
-    </div>
+    <Card>
+      <CardContent className="flex flex-row p-4">
+        <div className="flex-grow space-y-2">
+          <Skeleton
+            className={`h-7 w-1/4 ${pulse ? "" : "animate-none"}`}
+          />
+          <Skeleton
+            className={`h-4 w-1/3 ${pulse ? "" : "animate-none"}`}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

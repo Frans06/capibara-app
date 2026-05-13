@@ -10,7 +10,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
-import type { Auth } from "@capibara/auth";
+import type { Session } from "@capibara/auth";
 import { db } from "@capibara/db/client";
 
 /**

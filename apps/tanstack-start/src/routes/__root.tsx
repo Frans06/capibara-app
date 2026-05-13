@@ -11,7 +11,11 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import type { AppRouter } from "@capibara/api";
-import { ThemeProvider, ThemeToggle } from "@capibara/ui/theme";
+import {
+  themeDetectorScript,
+  ThemeProvider,
+  ThemeToggle,
+} from "@capibara/ui/theme";
 import { Toaster } from "@capibara/ui/toast";
 
 import appCss from "~/styles.css?url";
@@ -24,6 +28,14 @@ export const Route = createRootRouteWithContext<{
     links: [{ rel: "stylesheet", href: appCss }],
   }),
   component: RootComponent,
+  notFoundComponent: () => {
+    return (
+      <div>
+        <h1>404 - Page Not Found</h1>
+        <p>The page you are looking for does not exist.</p>
+      </div>
+    );
+  },
 });
 
 function RootComponent() {
@@ -40,6 +52,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <html lang="en" suppressHydrationWarning>
         <head>
           <HeadContent />
+          <script
+            dangerouslySetInnerHTML={{ __html: themeDetectorScript }}
+            suppressHydrationWarning
+          />
         </head>
         <body className="bg-background text-foreground min-h-screen font-sans antialiased">
           {children}

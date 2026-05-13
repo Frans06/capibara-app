@@ -18,6 +18,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/s3-request-presigner": "^3.1045.0",
     "@capibara/auth": "workspace:*",
     "@capibara/db": "workspace:*",
     "@capibara/validators": "workspace:*",

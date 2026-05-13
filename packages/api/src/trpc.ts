@@ -10,8 +10,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
-import type { Auth } from "@acme/auth";
-import { db } from "@acme/db/client";
+import type { Auth } from "@capibara/auth";
+import { db } from "@capibara/db/client";
 
 /**
  * 1. CONTEXT
@@ -26,9 +26,15 @@ import { db } from "@acme/db/client";
  * @see https://trpc.io/docs/server/context
  */
 
-export const createTRPCContext = async (opts: {
+export const createTRPCContext = async <
+  TAuth extends {
+    api: {
+      getSession: (opts: { headers: Headers }) => Promise<Session | null>;
+    };
+  },
+>(opts: {
   headers: Headers;
-  auth: Auth;
+  auth: TAuth;
 }) => {
   const authApi = opts.auth.api;
   const session = await authApi.getSession({

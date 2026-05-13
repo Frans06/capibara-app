@@ -11,10 +11,11 @@ import { Input } from "@capibara/ui/input";
 import { Label } from "@capibara/ui/label";
 
 import { authClient } from "~/auth/client";
+import { getSession } from "~/auth/server";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
+    const session = await getSession();
     if (session) {
       throw redirect({ to: "/" });
     }
@@ -88,7 +89,10 @@ function LoginPage() {
 
         <p className="text-muted-foreground text-center text-sm">
           Don&apos;t have an account?{" "}
-          <Link to="/signup" className="text-foreground font-medium underline underline-offset-4">
+          <Link
+            to="/signup"
+            className="text-foreground font-medium underline underline-offset-4"
+          >
             Sign up
           </Link>
         </p>

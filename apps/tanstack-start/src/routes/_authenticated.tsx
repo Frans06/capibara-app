@@ -13,14 +13,15 @@ import { Button } from "@capibara/ui/button";
 import { Separator } from "@capibara/ui/separator";
 
 import { authClient } from "~/auth/client";
+import { getSession } from "~/auth/server";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
+  beforeLoad: async ({ location }) => {
+    const session = await getSession();
     if (!session) {
-      throw redirect({ to: "/login" });
+      throw redirect({ to: "/login", search: { redirect: location.href } });
     }
-    return { session };
+    return { session: session };
   },
   component: AuthenticatedLayout,
 });
@@ -64,7 +65,7 @@ function AuthenticatedLayout() {
         <header className="border-border bg-background flex h-14 shrink-0 items-center gap-3 border-b px-4 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="text-foreground rounded-md p-1.5 hover:bg-accent"
+            className="text-foreground hover:bg-accent rounded-md p-1.5"
             aria-label="Open menu"
           >
             <MenuIcon />
@@ -84,7 +85,7 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   const { data: session } = authClient.useSession();
   const navigate = useNavigate();
   const location = useLocation();
-
+  console.log(session, "navbar session");
   async function handleSignOut() {
     await authClient.signOut();
     await navigate({ to: "/login" });
@@ -105,7 +106,9 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
       <nav className="flex flex-1 flex-col gap-1 p-2">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active =
-            to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+            to === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(to);
           return (
             <Link
               key={to}

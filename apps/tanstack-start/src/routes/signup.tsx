@@ -11,10 +11,11 @@ import { Input } from "@capibara/ui/input";
 import { Label } from "@capibara/ui/label";
 
 import { authClient } from "~/auth/client";
+import { getSession } from "~/auth/server";
 
 export const Route = createFileRoute("/signup")({
   beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
+    const session = await getSession();
     if (session) {
       throw redirect({ to: "/" });
     }

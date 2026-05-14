@@ -13,10 +13,10 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedReceiptsRouteImport } from './routes/_authenticated/receipts'
+import { Route as AuthenticatedReceiptsIndexRouteImport } from './routes/_authenticated/receipts/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth.$'
-import { Route as AuthenticatedReceiptsIdRouteImport } from './routes/_authenticated/receipts.$id'
+import { Route as AuthenticatedReceiptsIdRouteImport } from './routes/_authenticated/receipts/$id'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -37,11 +37,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedReceiptsRoute = AuthenticatedReceiptsRouteImport.update({
-  id: '/receipts',
-  path: '/receipts',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
+const AuthenticatedReceiptsIndexRoute =
+  AuthenticatedReceiptsIndexRouteImport.update({
+    id: '/receipts/',
+    path: '/receipts/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
@@ -53,69 +54,69 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedReceiptsIdRoute = AuthenticatedReceiptsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedReceiptsRoute,
+  id: '/receipts/$id',
+  path: '/receipts/$id',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/receipts': typeof AuthenticatedReceiptsRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
   '/receipts/$id': typeof AuthenticatedReceiptsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/receipts': typeof AuthenticatedReceiptsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/receipts': typeof AuthenticatedReceiptsRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
   '/receipts/$id': typeof AuthenticatedReceiptsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/receipts': typeof AuthenticatedReceiptsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
-  '/_authenticated/receipts': typeof AuthenticatedReceiptsRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/receipts/$id': typeof AuthenticatedReceiptsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/_authenticated/receipts/': typeof AuthenticatedReceiptsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/login'
     | '/signup'
-    | '/receipts'
     | '/'
     | '/receipts/$id'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/receipts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/signup'
-    | '/receipts'
     | '/'
     | '/receipts/$id'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/receipts'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/signup'
-    | '/_authenticated/receipts'
     | '/_authenticated/'
     | '/_authenticated/receipts/$id'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/_authenticated/receipts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -156,11 +157,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/receipts': {
-      id: '/_authenticated/receipts'
+    '/_authenticated/receipts/': {
+      id: '/_authenticated/receipts/'
       path: '/receipts'
       fullPath: '/receipts'
-      preLoaderRoute: typeof AuthenticatedReceiptsRouteImport
+      preLoaderRoute: typeof AuthenticatedReceiptsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/api/trpc/$': {
@@ -179,35 +180,24 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/receipts/$id': {
       id: '/_authenticated/receipts/$id'
-      path: '/$id'
+      path: '/receipts/$id'
       fullPath: '/receipts/$id'
       preLoaderRoute: typeof AuthenticatedReceiptsIdRouteImport
-      parentRoute: typeof AuthenticatedReceiptsRoute
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedReceiptsRouteChildren {
-  AuthenticatedReceiptsIdRoute: typeof AuthenticatedReceiptsIdRoute
-}
-
-const AuthenticatedReceiptsRouteChildren: AuthenticatedReceiptsRouteChildren = {
-  AuthenticatedReceiptsIdRoute: AuthenticatedReceiptsIdRoute,
-}
-
-const AuthenticatedReceiptsRouteWithChildren =
-  AuthenticatedReceiptsRoute._addFileChildren(
-    AuthenticatedReceiptsRouteChildren,
-  )
-
 interface AuthenticatedRouteChildren {
-  AuthenticatedReceiptsRoute: typeof AuthenticatedReceiptsRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedReceiptsIdRoute: typeof AuthenticatedReceiptsIdRoute
+  AuthenticatedReceiptsIndexRoute: typeof AuthenticatedReceiptsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedReceiptsRoute: AuthenticatedReceiptsRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedReceiptsIdRoute: AuthenticatedReceiptsIdRoute,
+  AuthenticatedReceiptsIndexRoute: AuthenticatedReceiptsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

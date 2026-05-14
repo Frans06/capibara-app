@@ -71,11 +71,26 @@ export const receiptRouter = {
         .returning();
     }),
 
-  all: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.query.Receipt.findMany({
+  all: protectedProcedure.query(async ({ ctx }) => {
+    const receipts = await ctx.db.query.Receipt.findMany({
       where: eq(Receipt.userId, ctx.session.user.id),
       orderBy: desc(Receipt.createdAt),
     });
+
+    const client = getR2Client();
+    const bucket = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+    if (!bucket) throw new Error("Missing CLOUDFLARE_R2_BUCKET_NAME");
+
+    return Promise.all(
+      receipts.map(async (receipt) => ({
+        ...receipt,
+        viewUrl: await getSignedUrl(
+          client,
+          new GetObjectCommand({ Bucket: bucket, Key: receipt.fileKey }),
+          { expiresIn: 900 },
+        ),
+      })),
+    );
   }),
 
   byId: protectedProcedure

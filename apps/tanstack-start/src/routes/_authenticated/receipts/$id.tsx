@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
   createFileRoute,
   Link,
@@ -137,9 +141,7 @@ function ReceiptDetailPage() {
                 {new Date(receipt.createdAt).toLocaleDateString()}
               </MetaRow>
               <MetaRow label="File">{receipt.fileName}</MetaRow>
-              {receipt.notes && (
-                <MetaRow label="Notes">{receipt.notes}</MetaRow>
-              )}
+              {receipt.notes && <MetaRow label="Notes">{receipt.notes}</MetaRow>}
             </dl>
           </div>
         </div>

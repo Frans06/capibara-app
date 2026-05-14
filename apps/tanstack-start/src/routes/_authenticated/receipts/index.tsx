@@ -1,5 +1,9 @@
 import { useRef, useState } from "react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import type { RouterOutputs } from "@capibara/api";
@@ -10,7 +14,7 @@ import { toast } from "@capibara/ui/toast";
 
 import { useTRPC } from "~/lib/trpc";
 
-export const Route = createFileRoute("/_authenticated/receipts")({
+export const Route = createFileRoute("/_authenticated/receipts/")({
   loader: ({ context: { trpc, queryClient } }) => {
     void queryClient.prefetchQuery(trpc.receipt.all.queryOptions());
   },
@@ -110,10 +114,7 @@ function UploadDialog({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
       {/* Dialog */}
       <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2">
         <div className="bg-card border-border rounded-xl border p-6 shadow-lg">
@@ -185,15 +186,25 @@ function ReceiptCard({
 }: {
   receipt: RouterOutputs["receipt"]["all"][number];
 }) {
+  const isImage = receipt.mimeType.startsWith("image/");
   return (
     <Link
       to="/receipts/$id"
       params={{ id: receipt.id }}
       className="bg-card border-border hover:border-ring group flex flex-col rounded-xl border p-4 transition-colors"
     >
-      {/* Thumbnail placeholder */}
-      <div className="bg-muted mb-3 flex h-28 items-center justify-center rounded-lg">
-        <FileIcon className="text-muted-foreground size-8" />
+      {/* Thumbnail */}
+      <div className="bg-muted mb-3 flex h-28 items-center justify-center overflow-hidden rounded-lg">
+        {isImage ? (
+          <img
+            src={receipt.viewUrl}
+            alt={receipt.fileName}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <FileIcon className="text-muted-foreground size-8" />
+        )}
       </div>
 
       <div className="flex-1 space-y-1">

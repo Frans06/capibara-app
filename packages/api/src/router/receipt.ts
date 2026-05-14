@@ -64,11 +64,16 @@ export const receiptRouter = {
 
   create: protectedProcedure
     .input(CreateReceiptSchema)
-    .mutation(({ ctx, input }) => {
-      return ctx.db
+    .mutation(async ({ ctx, input }) => {
+      const rows = await ctx.db
         .insert(Receipt)
         .values({ ...input, userId: ctx.session.user.id })
         .returning();
+
+      const row = rows[0];
+      if (row) triggerExtraction(row.id, row.fileKey);
+
+      return rows;
     }),
 
   all: protectedProcedure.query(async ({ ctx }) => {
@@ -143,3 +148,28 @@ export const receiptRouter = {
       return { success: true };
     }),
 } satisfies TRPCRouterRecord;
+
+// Fire-and-forget POST to the receipt-extractor Worker. Failure to enqueue
+// doesn't block the upload — the row stays in `status=pending` and can be
+// re-processed later (manual button or scheduled job).
+function triggerExtraction(receiptId: string, fileKey: string): void {
+  const url = process.env.RECEIPT_EXTRACTOR_URL;
+  const secret = process.env.RECEIPT_EXTRACTOR_SECRET;
+  if (!url || !secret) {
+    console.warn("[receipt] extractor URL/secret missing; skipping extraction");
+    return;
+  }
+
+  void fetch(`${url}/extract`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${secret}`,
+    },
+    body: JSON.stringify({ receiptId, fileKey }),
+  })
+    .catch((err: unknown) => {
+      console.error("[receipt] failed to trigger extractor", err);
+    })
+    .then((response) => console.log("[receipt] extractor response", response));
+}

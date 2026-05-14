@@ -1,0 +1,29 @@
+{
+  "name": "@capibara/receipt-extractor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --flag unstable_native_nodejs_ts_config",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "clean": "git clean -xdf .turbo .wrangler dist node_modules",
+    "with-env": "dotenv -e ../../.env --"
+  },
+  "dependencies": {
+    "postgres": "^3.4.5",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@capibara/eslint-config": "workspace:*",
+    "@capibara/prettier-config": "workspace:*",
+    "@capibara/tsconfig": "workspace:*",
+    "@cloudflare/workers-types": "^4.20251101.0",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "^4.0.0"
+  },
+  "prettier": "@capibara/prettier-config"
+}

@@ -1,0 +1,17 @@
+name = "capibara-receipt-extractor"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[r2_buckets]]
+binding = "RECEIPTS_BUCKET"
+bucket_name = "receipts-capibara"
+remote = true
+
+[ai]
+binding = "AI"
+remote = true
+
+# Secrets set via wrangler CLI:
+#   wrangler secret put POSTGRES_URL
+#   wrangler secret put SHARED_SECRET

@@ -12,6 +12,11 @@ import { Button } from "@capibara/ui/button";
 import { Label } from "@capibara/ui/label";
 import { toast } from "@capibara/ui/toast";
 
+import {
+  CategoryTag,
+  ScoreBadge,
+  StatusBadge,
+} from "~/component/receipt-badges";
 import { useTRPC } from "~/lib/trpc";
 
 export const Route = createFileRoute("/_authenticated/receipts/")({
@@ -194,7 +199,7 @@ function ReceiptCard({
       className="bg-card border-border hover:border-ring group flex flex-col rounded-xl border p-4 transition-colors"
     >
       {/* Thumbnail */}
-      <div className="bg-muted mb-3 flex h-28 items-center justify-center overflow-hidden rounded-lg">
+      <div className="bg-muted relative mb-3 flex h-28 items-center justify-center overflow-hidden rounded-lg">
         {isImage ? (
           <img
             src={receipt.viewUrl}
@@ -205,22 +210,32 @@ function ReceiptCard({
         ) : (
           <FileIcon className="text-muted-foreground size-8" />
         )}
+        {receipt.extractionScore !== null && (
+          <div className="absolute top-1.5 right-1.5">
+            <ScoreBadge score={receipt.extractionScore} />
+          </div>
+        )}
       </div>
 
       <div className="flex-1 space-y-1">
         <p className="text-foreground line-clamp-1 text-sm font-medium">
           {receipt.storeName ?? receipt.fileName}
         </p>
-        <p className="text-muted-foreground text-xs">
-          {receipt.receiptDate
-            ? new Date(receipt.receiptDate).toLocaleDateString()
-            : new Date(receipt.createdAt).toLocaleDateString()}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-muted-foreground text-xs">
+            {receipt.receiptDate
+              ? new Date(receipt.receiptDate).toLocaleDateString()
+              : new Date(receipt.createdAt).toLocaleDateString()}
+          </p>
+          {receipt.category && <CategoryTag category={receipt.category} />}
+        </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
         <span className="text-foreground text-sm font-semibold">
-          {receipt.total ? `$${receipt.total}` : "—"}
+          {receipt.total
+            ? `${receipt.currency ?? "$"} ${receipt.total}`
+            : "—"}
         </span>
         <StatusBadge status={receipt.status} />
       </div>
@@ -228,23 +243,6 @@ function ReceiptCard({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        status === "processed" &&
-          "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-        status === "pending" &&
-          "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-        status === "failed" &&
-          "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-      )}
-    >
-      {status}
-    </span>
-  );
-}
 
 function FileIcon({ className }: { className?: string }) {
   return (

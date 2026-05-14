@@ -12,6 +12,7 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "jsonrepair": "^3.13.1",
     "postgres": "^3.4.5",
     "zod": "catalog:"
   },

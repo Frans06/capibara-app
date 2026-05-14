@@ -85,7 +85,6 @@ function SidebarContent({ onNavigate }: { onNavigate: () => void }) {
   const { data: session } = authClient.useSession();
   const navigate = useNavigate();
   const location = useLocation();
-  console.log(session, "navbar session");
   async function handleSignOut() {
     await authClient.signOut();
     await navigate({ to: "/login" });

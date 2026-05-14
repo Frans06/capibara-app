@@ -1,8 +1,11 @@
 import { z } from "zod/v4";
 
-import type { Env } from "./env";
+import type { ExtractedFields, ExtractedItem } from "./db";
 import { updateReceiptExtraction } from "./db";
+import type { Env } from "./env";
+import type { Extraction } from "./extract";
 import { extractReceipt } from "./extract";
+import { computeScore } from "./score";
 
 const RequestSchema = z.object({
   receiptId: z.string().uuid(),
@@ -33,13 +36,11 @@ export default {
     const obj = await env.RECEIPTS_BUCKET.get(fileKey);
 
     if (!obj) {
-      await safeUpdate(env, receiptId, {
-        storeName: null,
-        total: null,
-        receiptDate: null,
-        notes: `File not found in R2: ${fileKey}`,
-        status: "failed",
-      });
+      await safeUpdate(
+        env,
+        receiptId,
+        failureFields(`File not found in R2: ${fileKey}`),
+      );
       return new Response("Receipt file not found", { status: 404 });
     }
 
@@ -48,34 +49,77 @@ export default {
 
     try {
       const extracted = await extractReceipt(env, bytes, mimeType);
-      await updateReceiptExtraction(env, receiptId, {
-        storeName: extracted.storeName,
-        total: extracted.total !== null ? String(extracted.total) : null,
-        receiptDate: extracted.receiptDate,
-        notes: extracted.notes,
-        status: "processed",
-      });
+      await updateReceiptExtraction(env, receiptId, toDbFields(extracted));
       return new Response("OK");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unknown extraction error";
       console.error("[receipt-extractor] extraction failed", err);
-      await safeUpdate(env, receiptId, {
-        storeName: null,
-        total: null,
-        receiptDate: null,
-        notes: `Extraction failed: ${message}`,
-        status: "failed",
-      });
+      await safeUpdate(
+        env,
+        receiptId,
+        failureFields(`Extraction failed: ${message}`),
+      );
       return new Response("Extraction failed", { status: 500 });
     }
   },
 } satisfies ExportedHandler<Env>;
 
+function toDbFields(extracted: Extraction): ExtractedFields {
+  return {
+    storeName: extracted.storeName,
+    storeAddress: extracted.storeAddress,
+    receiptDate: extracted.receiptDate,
+    currency: extracted.currency?.toUpperCase() ?? null,
+    subtotal: numToStr(extracted.subtotal),
+    tax: numToStr(extracted.tax),
+    tip: numToStr(extracted.tip),
+    total: numToStr(extracted.total),
+    paymentMethod: extracted.paymentMethod,
+    category: extracted.category,
+    items: extracted.items?.map(toDbItem) ?? null,
+    notes: extracted.notes,
+    extractionScore: computeScore(extracted),
+    status: "processed",
+  };
+}
+
+function toDbItem(item: NonNullable<Extraction["items"]>[number]): ExtractedItem {
+  return {
+    name: item.name,
+    quantity: item.quantity,
+    unitPrice: numToStr(item.unitPrice),
+    totalPrice: numToStr(item.totalPrice),
+  };
+}
+
+function numToStr(n: number | null): string | null {
+  return n === null ? null : n.toFixed(2);
+}
+
+function failureFields(message: string): ExtractedFields {
+  return {
+    storeName: null,
+    storeAddress: null,
+    receiptDate: null,
+    currency: null,
+    subtotal: null,
+    tax: null,
+    tip: null,
+    total: null,
+    paymentMethod: null,
+    category: null,
+    items: null,
+    notes: message,
+    extractionScore: 0,
+    status: "failed",
+  };
+}
+
 async function safeUpdate(
   env: Env,
   receiptId: string,
-  fields: Parameters<typeof updateReceiptExtraction>[2],
+  fields: ExtractedFields,
 ): Promise<void> {
   try {
     await updateReceiptExtraction(env, receiptId, fields);

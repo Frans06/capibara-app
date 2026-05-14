@@ -1,25 +1,87 @@
+import { jsonrepair } from "jsonrepair";
 import { z } from "zod/v4";
 
 import type { Env } from "./env";
 
-const ExtractionSchema = z.object({
-  storeName: z.string().nullable(),
-  total: z.number().nullable(),
-  receiptDate: z.string().nullable(),
-  notes: z.string().nullable(),
+const CATEGORIES = [
+  "groceries",
+  "dining",
+  "gas",
+  "retail",
+  "services",
+  "entertainment",
+  "travel",
+  "healthcare",
+  "other",
+] as const;
+
+// Coerce + catch makes each numeric field accept stringified numbers ("4.99")
+// and silently fall back to null on garbage values, so one bad line item
+// doesn't kill the whole row.
+const nullableNum = z.coerce.number().nullable().catch(null);
+
+const ItemSchema = z.object({
+  name: z.string().min(1),
+  quantity: nullableNum,
+  unitPrice: nullableNum,
+  totalPrice: nullableNum,
+});
+
+export const ExtractionSchema = z.object({
+  storeName: z.string().nullable().catch(null),
+  storeAddress: z.string().nullable().catch(null),
+  receiptDate: z.string().nullable().catch(null),
+  currency: z.string().length(3).nullable().catch(null),
+  subtotal: nullableNum,
+  tax: nullableNum,
+  tip: nullableNum,
+  total: nullableNum,
+  paymentMethod: z.string().nullable().catch(null),
+  category: z.enum(CATEGORIES).nullable().catch(null),
+  // Each item is `.catch(null)` then filtered, so a single malformed item
+  // doesn't drop the whole array.
+  items: z
+    .array(ItemSchema.nullable().catch(null))
+    .nullable()
+    .catch(null)
+    .transform((arr) => (arr ? arr.filter((i): i is z.infer<typeof ItemSchema> => i !== null) : null)),
+  notes: z.string().nullable().catch(null),
 });
 
 export type Extraction = z.infer<typeof ExtractionSchema>;
+export type ExtractedItem = z.infer<typeof ItemSchema>;
 
-const SYSTEM_PROMPT = `You are a receipt OCR extractor. Read the receipt image and return ONLY a JSON object matching this exact shape:
+const SYSTEM_PROMPT = `You are a receipt OCR extractor. Read the receipt image and return ONLY a JSON object with this exact shape:
+
 {
-  "storeName": <string — store/merchant name, or null if not visible>,
-  "total": <number — final total amount as a plain decimal (e.g. 24.50), or null if not visible>,
-  "receiptDate": <string — date in ISO format YYYY-MM-DD, or null if not visible>,
-  "notes": <string — short summary of the line items (max 200 chars), or null>
+  "storeName":     <string — merchant name on the receipt, or null>,
+  "storeAddress":  <string — physical address printed on the receipt, or null>,
+  "receiptDate":   <string — ISO date YYYY-MM-DD of the transaction, or null>,
+  "currency":      <string — 3-letter ISO 4217 code (USD, EUR, MXN, GBP, JPY, ...), or null>,
+  "subtotal":      <number — pre-tax/tip total as plain decimal (e.g. 21.50), or null>,
+  "tax":           <number — tax amount as plain decimal, or null>,
+  "tip":           <number — gratuity / service charge as plain decimal, or null>,
+  "total":         <number — final amount paid as plain decimal, or null>,
+  "paymentMethod": <string — e.g. "cash", "card", "**** 1234", "Visa", or null>,
+  "category":      <one of "groceries"|"dining"|"gas"|"retail"|"services"|"entertainment"|"travel"|"healthcare"|"other", or null>,
+  "items": [
+    {
+      "name":       <string — product/service name>,
+      "quantity":   <number — units purchased, default 1 if unclear, or null>,
+      "unitPrice":  <number — price per unit as plain decimal, or null>,
+      "totalPrice": <number — line total as plain decimal, or null>
+    }
+  ] | null,
+  "notes": <string — optional short remark (e.g. "tip included", "discount applied"), or null>
 }
 
-Respond with ONLY the JSON object. No markdown fences, no commentary.`;
+Rules:
+- Use null for any field that is not clearly visible on the receipt. DO NOT invent or guess values.
+- Numbers must be plain JSON numbers (no currency symbols, no thousand separators).
+- Dates must be in YYYY-MM-DD. If only month/day are visible and the year is unclear, use null.
+- "category" must be exactly one of the listed values (lowercase).
+- "items" is an array of every distinct line item. If no items are legible, use null.
+- Respond with ONLY the raw JSON object. No markdown fences, no commentary, no preamble.`;
 
 export async function extractReceipt(
   env: Env,
@@ -69,14 +131,36 @@ function extractText(response: unknown): string {
 function parseExtraction(text: string): Extraction {
   const match = /\{[\s\S]*\}/.exec(text);
   if (!match) throw new Error("No JSON object found in AI response");
-  const parsed: unknown = JSON.parse(match[0]);
-  return ExtractionSchema.parse(parsed);
+
+  // 1. Repair common LLM mistakes (trailing commas, missing commas, single
+  //    quotes, partially-closed strings) before JSON.parse.
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonrepair(match[0]));
+  } catch (err) {
+    throw new Error(
+      `Could not repair AI JSON: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  // 2. Try the strict schema first.
+  const result = ExtractionSchema.safeParse(parsed);
+  if (result.success) return result.data;
+
+  // 3. Final fallback: drop the items array entirely (the most failure-prone
+  //    field) and try again, so a partially-extracted row still saves.
+  if (parsed && typeof parsed === "object") {
+    const stripped = { ...(parsed as Record<string, unknown>), items: null };
+    const retry = ExtractionSchema.safeParse(stripped);
+    if (retry.success) return retry.data;
+  }
+
+  throw new Error(`Extraction failed Zod validation: ${result.error.message}`);
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = "";
-  // Chunk to avoid call-stack overflow on large images
   const chunkSize = 0x8000;
   for (let i = 0; i < bytes.length; i += chunkSize) {
     binary += String.fromCharCode(

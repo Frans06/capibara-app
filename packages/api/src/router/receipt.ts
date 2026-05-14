@@ -9,7 +9,11 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod/v4";
 
 import { desc, eq } from "@capibara/db";
-import { CreateReceiptSchema, Receipt } from "@capibara/db/schema";
+import {
+  CreateReceiptSchema,
+  Receipt,
+  RECEIPT_CATEGORIES,
+} from "@capibara/db/schema";
 
 import { protectedProcedure } from "../trpc";
 
@@ -123,6 +127,55 @@ export const receiptRouter = {
       return { ...receipt, viewUrl };
     }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        storeName: z.string().nullable(),
+        storeAddress: z.string().nullable(),
+        receiptDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
+        currency: z.string().length(3).nullable(),
+        subtotal: z.string().nullable(),
+        tax: z.string().nullable(),
+        tip: z.string().nullable(),
+        total: z.string().nullable(),
+        paymentMethod: z.string().nullable(),
+        category: z.enum(RECEIPT_CATEGORIES).nullable(),
+        items: z
+          .array(
+            z.object({
+              name: z.string().min(1),
+              quantity: z.number().nullable(),
+              unitPrice: z.string().nullable(),
+              totalPrice: z.string().nullable(),
+            }),
+          )
+          .nullable(),
+        notes: z.string().nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...fields } = input;
+      const existing = await ctx.db.query.Receipt.findFirst({
+        where: eq(Receipt.id, id),
+      });
+      if (!existing || existing.userId !== ctx.session.user.id) {
+        return null;
+      }
+      // Pass updatedAt explicitly to bypass the schema's $onUpdateFn — that
+      // function returns a SQL expression from a drizzle-orm copy that doesn't
+      // match the one running this UPDATE, which would otherwise trip drizzle
+      // into calling .toISOString() on a SQL object.
+      await ctx.db
+        .update(Receipt)
+        .set({ ...fields, updatedAt: new Date() })
+        .where(eq(Receipt.id, id));
+      return { success: true };
+    }),
+
   delete: protectedProcedure
     .input(z.string().uuid())
     .mutation(async ({ ctx, input }) => {
@@ -167,9 +220,7 @@ function triggerExtraction(receiptId: string, fileKey: string): void {
       authorization: `Bearer ${secret}`,
     },
     body: JSON.stringify({ receiptId, fileKey }),
-  })
-    .catch((err: unknown) => {
-      console.error("[receipt] failed to trigger extractor", err);
-    })
-    .then((response) => console.log("[receipt] extractor response", response));
+  }).catch((err: unknown) => {
+    console.error("[receipt] failed to trigger extractor", err);
+  });
 }

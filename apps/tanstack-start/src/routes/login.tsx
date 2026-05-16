@@ -47,8 +47,8 @@ function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="border-border bg-card w-full max-w-sm space-y-6 rounded-xl border p-8 shadow-sm">
+    <main className="flex min-h-screen items-center justify-center px-4">
+      <div className="border-border bg-card w-full max-w-sm space-y-6 rounded-xl border p-6 shadow-sm sm:p-8">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
           <p className="text-muted-foreground text-sm">

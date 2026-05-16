@@ -32,14 +32,18 @@ function ReceiptsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Receipts</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Upload and manage your receipts
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} disabled={uploading}>
+        <Button
+          className="w-full sm:w-auto"
+          onClick={() => setDialogOpen(true)}
+          disabled={uploading}
+        >
           Upload receipt
         </Button>
       </div>
@@ -121,7 +125,7 @@ function UploadDialog({
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
       {/* Dialog */}
-      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2">
+      <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2">
         <div className="bg-card border-border rounded-xl border p-6 shadow-lg">
           <h2 className="mb-4 text-lg font-semibold">Upload receipt</h2>
           <form onSubmit={handleSubmit} className="space-y-4">

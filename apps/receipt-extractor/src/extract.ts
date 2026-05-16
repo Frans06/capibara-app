@@ -104,6 +104,7 @@ export async function extractReceipt(
         },
       ],
       response_format: { type: "json_object" },
+      max_tokens: 4096,
     } as unknown as AiTextGenerationInput,
   );
 

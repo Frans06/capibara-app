@@ -69,6 +69,16 @@ function ReceiptDetailPage() {
   const [confirming, setConfirming] = useState(false);
   const [editing, setEditing] = useState(false);
 
+  const rescan = useMutation(
+    trpc.receipt.rescan.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.receipt.pathFilter());
+        toast.success("Rescanning receipt…");
+      },
+      onError: () => toast.error("Failed to start rescan"),
+    }),
+  );
+
   const deleteReceipt = useMutation(
     trpc.receipt.delete.mutationOptions({
       onSuccess: async () => {
@@ -86,18 +96,26 @@ function ReceiptDetailPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex flex-wrap items-center gap-4">
+      <div className="mb-6 flex flex-wrap items-center gap-2 sm:gap-4">
         <Button asChild variant="ghost" size="sm">
           <Link to="/receipts">← Back</Link>
         </Button>
-        <h1 className="flex-1 truncate text-xl font-bold">
+        <h1 className="min-w-0 flex-1 truncate text-xl font-bold">
           {receipt.storeName ?? receipt.fileName}
         </h1>
         {receipt.extractionScore !== null && !editing && (
           <ScoreBadge score={receipt.extractionScore} />
         )}
         {!editing && !confirming && (
-          <>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => rescan.mutate({ id: receipt.id })}
+              disabled={rescan.isPending}
+            >
+              {rescan.isPending ? "Rescanning…" : "Rescan"}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
               Edit
             </Button>
@@ -108,10 +126,10 @@ function ReceiptDetailPage() {
             >
               Delete
             </Button>
-          </>
+          </div>
         )}
         {confirming && (
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="text-muted-foreground text-sm">Are you sure?</span>
             <Button
               variant="destructive"
@@ -144,8 +162,7 @@ function ReceiptDetailPage() {
             <iframe
               src={receipt.viewUrl}
               title={receipt.fileName}
-              className="h-full w-full"
-              style={{ minHeight: 500 }}
+              className="h-full min-h-64 w-full lg:min-h-[500px]"
             />
           )}
         </div>
@@ -225,7 +242,8 @@ function ItemsTable({
   return (
     <div className="bg-card border-border rounded-xl border p-5">
       <h2 className="mb-3 font-semibold">Items ({items.length})</h2>
-      <table className="w-full text-sm">
+      <div className="-mx-1 overflow-x-auto">
+        <table className="w-full text-sm">
         <thead>
           <tr className="text-muted-foreground border-border border-b text-left text-xs uppercase tracking-wide">
             <th className="pb-2 font-medium">Item</th>
@@ -246,7 +264,8 @@ function ItemsTable({
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

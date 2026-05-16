@@ -176,6 +176,25 @@ export const receiptRouter = {
       return { success: true };
     }),
 
+  rescan: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const receipt = await ctx.db.query.Receipt.findFirst({
+        where: eq(Receipt.id, input.id),
+      });
+      if (!receipt || receipt.userId !== ctx.session.user.id) {
+        return null;
+      }
+      // updatedAt set explicitly to bypass the schema's $onUpdateFn (see the
+      // note on `update` above re: the drizzle dual-module hazard).
+      await ctx.db
+        .update(Receipt)
+        .set({ status: "pending", updatedAt: new Date() })
+        .where(eq(Receipt.id, input.id));
+      triggerExtraction(receipt.id, receipt.fileKey);
+      return { success: true };
+    }),
+
   delete: protectedProcedure
     .input(z.string().uuid())
     .mutation(async ({ ctx, input }) => {

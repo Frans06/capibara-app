@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Development
-pnpm dev              # Start all apps in watch mode
+pnpm dev              # Run all apps EXCEPT the worker (which has its own TTY)
+pnpm dev:worker       # Run the receipt-extractor Cloudflare Worker on localhost:8787
 pnpm build            # Build everything
 
 # Code quality
@@ -15,65 +16,105 @@ pnpm lint             # ESLint across all packages
 pnpm lint:fix         # ESLint with --fix
 pnpm format:fix       # Prettier with --write
 
-# Database
-pnpm db:push          # Push Drizzle schema to Supabase
-pnpm db:studio        # Open Drizzle Studio UI
+# Database (Drizzle + Supabase)
+pnpm db:push          # Apply schema changes to the database
+pnpm db:studio        # Open Drizzle Studio
+# If TLS verification fails on the self-signed Supabase cert:
+#   NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm --filter @capibara/db exec dotenv -e ../../.env -- drizzle-kit push
 
-# Auth schema generation
-pnpm auth:generate    # Regenerate packages/db/src/auth-schema.ts from Better Auth config
+# Better Auth schema regeneration (run after editing packages/auth)
+pnpm auth:generate    # Regenerates packages/db/src/auth-schema.ts
 
-# UI components
-pnpm ui-add           # Interactive shadcn/ui component installer
-
-# New package scaffold
-pnpm turbo gen init
+# Worker deployment (Cloudflare)
+pnpm --filter @capibara/receipt-extractor exec wrangler secret put POSTGRES_URL
+pnpm --filter @capibara/receipt-extractor exec wrangler secret put SHARED_SECRET
+pnpm --filter @capibara/receipt-extractor deploy
 ```
 
-There are no automated tests in this repository.
+No automated tests in this repo.
 
 ## Architecture
 
-### Monorepo layout
+### Apps
+- `apps/tanstack-start` — web app. TanStack Start + React 19 + Tailwind v4. Hosts tRPC and Better Auth handlers.
+- `apps/expo` — mobile app (Expo SDK 54). Shares the tRPC API and `@capibara/auth`.
+- `apps/receipt-extractor` — Cloudflare Worker that runs vision OCR on uploaded receipts. Triggered by the API after `receipt.create`.
 
-Turborepo monorepo with pnpm workspaces. Package scope: `@capibara`.
+### Shared packages
+- `packages/api` — tRPC v11 routers (`auth`, `receipt`). Exported via `@capibara/api`.
+- `packages/auth` — Better Auth factory (`initAuth`). Each app calls it with its own env.
+- `packages/db` — Drizzle schema + Vercel-Postgres client. Schema includes Better Auth tables (generated via `pnpm auth:generate`) and `Receipt`.
+- `packages/ui` — shadcn/ui components for the web app.
+- `packages/validators` — shared Zod schemas.
 
-- `apps/tanstack-start` — web app (TanStack Start, React 19, Tailwind v4, tRPC client)
-- `apps/expo` — mobile app (Expo SDK 54, React Native 0.81, NativeWind v5, tRPC client)
-- `packages/api` — tRPC v11 router definitions (server-side only)
-- `packages/auth` — Better Auth factory (`initAuth`), shared across apps
-- `packages/db` — Drizzle schema, Supabase client
-- `packages/ui` — shadcn/ui components for the web app
-- `packages/validators` — shared Zod schemas
+### Receipt pipeline (most non-obvious flow)
+1. Browser requests pre-signed PUT URL via `trpc.receipt.getUploadUrl`, uploads directly to R2.
+2. Browser calls `trpc.receipt.create` with `{ fileKey, fileName, mimeType }`. API inserts a row with `status="pending"` and **fires a fire-and-forget POST** to the receipt-extractor worker (URL in `RECEIPT_EXTRACTOR_URL`, Bearer secret `RECEIPT_EXTRACTOR_SECRET`).
+3. Worker pulls the file from R2 via its R2 binding, calls Mistral Small 3.1 24B on Workers AI (`@cf/mistralai/mistral-small-3.1-24b-instruct`), repairs the JSON with `jsonrepair`, validates with Zod (with `.catch(null)` per field so one bad field doesn't kill the row), computes a weighted completeness score in `src/score.ts`, and writes the row back to Postgres.
+4. Worker UPDATEs Postgres via **raw `postgres-js` SQL**, not Drizzle. See "Drizzle dual-module hazard" below.
 
-### tRPC
+The `receipt.create` route also returns the inserted row, so the UI gets immediate feedback even before extraction completes; the row shows `status="pending"` until the worker updates it.
 
-`packages/api/src/trpc.ts` defines the tRPC context, `publicProcedure`, and `protectedProcedure`. Add new routers under `packages/api/src/router/` and register them in `packages/api/src/root.ts`.
+### tRPC procedures on `receipt`
+- `getUploadUrl` — returns pre-signed R2 PUT URL (5 min) + `fileKey`
+- `create` — inserts row, triggers worker
+- `all` — list user's receipts; each row includes a fresh pre-signed GET URL (15 min)
+- `byId` — single receipt with view URL
+- `update` — user edits (store, totals, items, category, etc.); **must explicitly set `updatedAt: new Date()`** to avoid the dual-module issue (see below)
+- `delete` — removes row and R2 object
 
-The context (`createTRPCContext`) injects `db` and `session` into every procedure. `protectedProcedure` throws `UNAUTHORIZED` if no session exists and narrows `ctx.session.user` to non-nullable.
+### Auth flow
+- `apps/tanstack-start/src/auth/server.ts` exports `auth` and a `getSession` server function. `auth` is wrapped in `createIsomorphicFn()` (`.server(initAuth(...)).client(null)`) so the `env.AUTH_SECRET` access is tree-shaken from the client bundle. Otherwise importing `getSession` from any route would crash the browser.
+- Route guards use `getSession()` (the server function) in `beforeLoad`; the returned session is exposed via `Route.useRouteContext()` to child components — no need for `authClient.useSession()` inside protected routes.
+- Routes structure:
+  - `routes/login.tsx` — email/password sign-in via `authClient.signIn.email`
+  - `routes/signup.tsx` — email/password sign-up via `authClient.signUp.email`
+  - `routes/_authenticated.tsx` — pathless layout: sidebar + auth guard, exposes `session` in route context
+  - `routes/_authenticated/index.tsx` — dashboard
+  - `routes/_authenticated/receipts/index.tsx` — list (note: uses **directory** routing, not the `receipts.tsx` + `receipts.$id.tsx` dot-notation, which made detail a nested child of list)
+  - `routes/_authenticated/receipts/$id.tsx` — detail + inline edit mode
 
-The `api` package must be a **production dependency only in the web app**. In Expo (and any other client app) it should be a **dev dependency** — this prevents backend code from leaking into client bundles while still giving full type safety.
+### Theme detector script
+Lives **inside `<head>`** in `routes/__root.tsx` (via `themeDetectorScript` exported from `@capibara/ui/theme`), not inside `ThemeProvider`. React 19 rejects non-async inline `<script>` outside `<head>`, and it needs to run before paint anyway to avoid FOUC.
 
-### Authentication
+## Drizzle dual-module hazard
 
-`packages/auth/src/index.ts` exports `initAuth()` — a factory that takes `baseUrl`, `productionUrl`, and `secret` and returns a configured Better Auth instance. Each app calls `initAuth` once with its own env values (e.g. `apps/tanstack-start/src/auth/server.ts`).
+`@capibara/db` ships `drizzle-orm` as a runtime dep. pnpm resolves separate virtual stores per peer-dep set (e.g., the worker's drizzle-orm has `@cloudflare/workers-types`, the web's has `@vercel/postgres`). When `sql\`now()\`` from one drizzle-orm instance meets `instanceof SQL` from another, the check fails and Drizzle calls `mapToDriverValue` (which calls `.toISOString()`) on the SQL object — yielding `TypeError: value.toISOString is not a function`.
 
-Always-active plugins: `oAuthProxy` (routes OAuth through the deployed web URL so Expo works in dev/preview) and `expo()`. Email+password is enabled by default.
+Two workarounds in the codebase:
+1. **Worker:** does not use Drizzle at all. `apps/receipt-extractor/src/db.ts` uses raw `postgres-js` template SQL (`UPDATE receipt SET … updated_at = now() WHERE id = $1`). Schema reused only as types.
+2. **API `receipt.update`:** explicitly sets `updatedAt: new Date()` in the `.set()` call to bypass the schema's `$onUpdateFn` (which would otherwise return a `sql\`now()\`` from a foreign drizzle copy).
 
-`packages/auth/script/auth-cli.ts` is a **CLI-only** config used solely for schema generation. Never import it in application code.
+If you add new UPDATE mutations, prefer providing `updatedAt` explicitly until the dual-module issue is fixed at the pnpm level (root `pnpm.overrides` or moving drizzle-orm to peer deps in `@capibara/db`).
 
-### Database
+## Cloudflare Worker dev specifics
+- `wrangler.toml` declares per-binding `remote = true` on the R2 and AI bindings so local `wrangler dev` uses the **real** R2 bucket and the real Workers AI (the local R2 simulator is empty; AI has no local equivalent). Requires `wrangler login`.
+- `--remote` flag on the CLI runs the *whole worker* on Cloudflare's edge — different feature; not what we want here.
+- The worker's `dev` script is excluded from the root `pnpm dev` (it doesn't compose with `turbo watch dev`'s output multiplexing — wrangler's interactive TUI dies with EPIPE). Use `pnpm dev:worker` in a separate terminal.
 
-Schema lives in `packages/db/src/schema.ts`. `packages/db/src/auth-schema.ts` is **generated** — do not edit it by hand; run `pnpm auth:generate` after changing Better Auth config, then `pnpm db:push`.
+## Environment variables
 
-### Environment variables
+Declared in `turbo.json` `globalEnv`:
 
-Declared in `turbo.json` → `globalEnv` so Turborepo caches them correctly:
+| Variable | Used by | Purpose |
+|---|---|---|
+| `POSTGRES_URL` | api, worker, drizzle-kit | Supabase connection string |
+| `AUTH_SECRET` | api | Better Auth signing secret |
+| `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET` | api | Discord OAuth (optional) |
+| `AUTH_REDIRECT_PROXY_URL` | api | OAuth proxy URL for expo dev |
+| `CLOUDFLARE_R2_ACCOUNT_ID` | api | R2 account ID for pre-signed URLs |
+| `CLOUDFLARE_R2_ACCESS_KEY_ID` | api | R2 API token key ID |
+| `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | api | R2 API token secret |
+| `CLOUDFLARE_R2_BUCKET_NAME` | api | Bucket name (`receipts-capibara`) |
+| `RECEIPT_EXTRACTOR_URL` | api | Worker base URL (e.g. `http://localhost:8787`) |
+| `RECEIPT_EXTRACTOR_SECRET` | api | Bearer secret; must match worker's `SHARED_SECRET` |
 
-| Variable | Purpose |
-|---|---|
-| `POSTGRES_URL` | Supabase connection string |
-| `AUTH_SECRET` | Better Auth signing secret (`openssl rand -base64 32`) |
-| `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET` | Discord OAuth credentials |
-| `AUTH_REDIRECT_PROXY_URL` | OAuth proxy URL (set to deployed web app URL) |
+The worker has additional **wrangler secrets** (not in `.env`): `POSTGRES_URL` and `SHARED_SECRET`. Set with `wrangler secret put`. For local dev, place them in `apps/receipt-extractor/.dev.vars`.
 
 Copy `.env.example` → `.env` to get started.
+
+## Receipt schema notes
+- `Receipt.userId` has `.references(() => user.id, { onDelete: "cascade" })` — deleting a Better Auth user cascades to their receipts.
+- `RECEIPT_CATEGORIES` and `ReceiptItem` are exported from `@capibara/db/schema` for cross-app reuse.
+- `extractionScore` (0–100) is computed by the worker with weighted completeness — not from AI confidence.
+- `items` is JSONB; reuses the `ReceiptItem` TypeScript type via `$type<>()`. Worker writes via `JSON.stringify(items)::jsonb` cast (the `sql.json()` helper from postgres-js has overly strict types).

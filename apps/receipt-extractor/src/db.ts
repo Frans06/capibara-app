@@ -45,7 +45,17 @@ export async function updateReceiptExtraction(
           total            = ${fields.total},
           payment_method   = ${fields.paymentMethod},
           category         = ${fields.category},
-          items            = ${fields.items === null ? null : JSON.stringify(fields.items)}::jsonb,
+          items            = ${
+            fields.items === null
+              ? null
+              : // postgres-js JSONValue rejects arrays-of-objects (overly
+                // strict); cast through its own param type. sql.json encodes
+                // exactly once — manual JSON.stringify + ::jsonb double-encoded
+                // it into a jsonb *string* scalar instead of an array.
+                sql.json(
+                  fields.items as unknown as Parameters<typeof sql.json>[0],
+                )
+          },
           notes            = ${fields.notes},
           extraction_score = ${fields.extractionScore},
           status           = ${fields.status},

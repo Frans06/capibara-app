@@ -109,7 +109,54 @@ export async function extractReceipt(
   );
 
   const text = extractText(response);
-  return parseExtraction(text);
+  const extraction = parseExtraction(text);
+
+  // --- Diagnostics: why does the item list stop? -------------------------
+  // 4096 max_tokens easily holds 20+ items, so truncation at ~18-20 is likely
+  // a model-stop (lazy/unreadable rows), not a token cap. These signals tell
+  // us which: finish_reason "length" / completion≈4096 => token cap;
+  // "stop" + modest completion => model chose to end. jsonWasTruncated flags
+  // an unterminated array that jsonrepair silently closed.
+  const meta = extractMeta(response);
+  const rawJson = /\{[\s\S]*\}/.exec(text)?.[0] ?? "";
+  let jsonWasTruncated = false;
+  try {
+    JSON.parse(rawJson);
+  } catch {
+    jsonWasTruncated = true;
+  }
+  console.log(
+    "[receipt-extractor][diag]",
+    JSON.stringify({
+      finishReason: meta.finishReason,
+      usage: meta.usage,
+      rawTextLength: text.length,
+      jsonWasTruncated,
+      itemCountParsed: extraction.items?.length ?? 0,
+    }),
+  );
+
+  return extraction;
+}
+
+// Pulls finish_reason + token usage from the (loosely-typed) Workers AI
+// response. Both are undocumented for this model but present on the
+// OpenAI-shaped payload; fields are optional so missing values log as null.
+function extractMeta(response: unknown): {
+  finishReason: string | null;
+  usage: unknown;
+} {
+  if (!response || typeof response !== "object") {
+    return { finishReason: null, usage: null };
+  }
+  const r = response as Record<string, unknown>;
+  let finishReason: string | null = null;
+  const choices = r.choices;
+  if (Array.isArray(choices) && choices[0] && typeof choices[0] === "object") {
+    const fr = (choices[0] as Record<string, unknown>).finish_reason;
+    if (typeof fr === "string") finishReason = fr;
+  }
+  return { finishReason, usage: r.usage ?? null };
 }
 
 function extractText(response: unknown): string {

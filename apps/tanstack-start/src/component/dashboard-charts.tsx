@@ -27,6 +27,8 @@ import {
   ChartTooltipContent,
 } from "@capibara/ui/chart";
 
+import type { Granularity } from "~/lib/dashboard-store";
+
 type Receipt = RouterOutputs["receipt"]["all"][number];
 
 const PALETTE = [
@@ -36,18 +38,6 @@ const PALETTE = [
   "var(--chart-4)",
   "var(--chart-5)",
 ] as const;
-
-// --- aggregation -----------------------------------------------------------
-
-function receiptDate(r: Receipt): Date {
-  // receiptDate is a 'YYYY-MM-DD' string; fall back to upload time.
-  if (r.receiptDate) return new Date(`${r.receiptDate}T00:00:00`);
-  return new Date(r.createdAt);
-}
-
-function monthKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
 
 const MONTH_LABELS = [
   "Jan",
@@ -64,21 +54,84 @@ const MONTH_LABELS = [
   "Dec",
 ];
 
+// Number of buckets shown per granularity.
+const WINDOW = { week: 12, month: 12, year: 6 } as const;
+const RANGE_LABEL: Record<Granularity, string> = {
+  week: "Last 12 weeks",
+  month: "Last 12 months",
+  year: "Last 6 years",
+};
+const PERIOD_NOUN: Record<Granularity, string> = {
+  week: "week",
+  month: "month",
+  year: "year",
+};
+
+// --- aggregation -----------------------------------------------------------
+
+function receiptDate(r: Receipt): Date {
+  // receiptDate is a 'YYYY-MM-DD' string; fall back to upload time.
+  if (r.receiptDate) return new Date(`${r.receiptDate}T00:00:00`);
+  return new Date(r.createdAt);
+}
+
+function startOfWeek(d: Date): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const mondayOffset = (x.getDay() + 6) % 7; // Mon = 0 … Sun = 6
+  x.setDate(x.getDate() - mondayOffset);
+  return x;
+}
+
+function bucketKey(d: Date, g: Granularity): string {
+  if (g === "year") return `${d.getFullYear()}`;
+  if (g === "month")
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return startOfWeek(d).toISOString().slice(0, 10);
+}
+
+// The bucket key + display label for the i-th period back from now (0 = current).
+function periodAt(g: Granularity, back: number): { key: string; label: string } {
+  const now = new Date();
+  if (g === "year") {
+    const y = now.getFullYear() - back;
+    return { key: `${y}`, label: `${y}` };
+  }
+  if (g === "month") {
+    const d = new Date(now.getFullYear(), now.getMonth() - back, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label =
+      MONTH_LABELS[d.getMonth()] +
+      (d.getMonth() === 0 ? ` '${String(d.getFullYear()).slice(2)}` : "");
+    return { key, label };
+  }
+  const ws = startOfWeek(now);
+  ws.setDate(ws.getDate() - back * 7);
+  return {
+    key: ws.toISOString().slice(0, 10),
+    label: `${MONTH_LABELS[ws.getMonth()]} ${ws.getDate()}`,
+  };
+}
+
 export interface DashboardStats {
   count: number;
   totalSpent: number;
   avgReceipt: number;
   taxTipPaid: number;
-  momPct: number | null;
+  periodPct: number | null;
+  periodNoun: string;
+  rangeLabel: string;
   currency: string;
-  monthly: { label: string; total: number }[];
+  series: { label: string; total: number }[];
   byCategory: { category: string; label: string; total: number }[];
   byMerchant: { name: string; total: number }[];
 }
 
 const num = (v: string | null): number => (v ? Number(v) || 0 : 0);
 
-export function useDashboardStats(receipts: Receipt[]): DashboardStats {
+export function useDashboardStats(
+  receipts: Receipt[],
+  granularity: Granularity,
+): DashboardStats {
   return useMemo(() => {
     const currency =
       mostFrequent(
@@ -90,7 +143,7 @@ export function useDashboardStats(receipts: Receipt[]): DashboardStats {
     let withTotal = 0;
     const catMap = new Map<string, number>();
     const merchMap = new Map<string, number>();
-    const monthMap = new Map<string, number>();
+    const bucketMap = new Map<string, number>();
 
     for (const r of receipts) {
       const total = num(r.total);
@@ -104,30 +157,21 @@ export function useDashboardStats(receipts: Receipt[]): DashboardStats {
       const merchant = r.storeName?.trim() ?? "Unknown";
       merchMap.set(merchant, (merchMap.get(merchant) ?? 0) + total);
 
-      monthMap.set(
-        monthKey(receiptDate(r)),
-        (monthMap.get(monthKey(receiptDate(r))) ?? 0) + total,
-      );
+      const key = bucketKey(receiptDate(r), granularity);
+      bucketMap.set(key, (bucketMap.get(key) ?? 0) + total);
     }
 
-    // Continuous last-12-months window so gaps render as zero bars.
-    const now = new Date();
-    const monthly: { label: string; total: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = monthKey(d);
-      const label =
-        MONTH_LABELS[d.getMonth()] +
-        (d.getMonth() === 0 || i === 11 ? ` '${String(d.getFullYear()).slice(2)}` : "");
-      monthly.push({ label, total: round2(monthMap.get(key) ?? 0) });
+    // Continuous window so empty periods render as zero bars (oldest → newest).
+    const n = WINDOW[granularity];
+    const series: { label: string; total: number }[] = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const { key, label } = periodAt(granularity, i);
+      series.push({ label, total: round2(bucketMap.get(key) ?? 0) });
     }
 
-    const thisKey = monthKey(new Date(now.getFullYear(), now.getMonth(), 1));
-    const prevKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-    const thisMonth = monthMap.get(thisKey) ?? 0;
-    const prevMonth = monthMap.get(prevKey) ?? 0;
-    const momPct =
-      prevMonth > 0 ? ((thisMonth - prevMonth) / prevMonth) * 100 : null;
+    const cur = bucketMap.get(periodAt(granularity, 0).key) ?? 0;
+    const prev = bucketMap.get(periodAt(granularity, 1).key) ?? 0;
+    const periodPct = prev > 0 ? ((cur - prev) / prev) * 100 : null;
 
     const byCategory = [...catMap.entries()]
       .map(([category, total]) => ({
@@ -149,13 +193,15 @@ export function useDashboardStats(receipts: Receipt[]): DashboardStats {
       totalSpent: round2(totalSpent),
       avgReceipt: withTotal ? round2(totalSpent / withTotal) : 0,
       taxTipPaid: round2(taxTipPaid),
-      momPct,
+      periodPct,
+      periodNoun: PERIOD_NOUN[granularity],
+      rangeLabel: RANGE_LABEL[granularity],
       currency,
-      monthly,
+      series,
       byCategory,
       byMerchant,
     };
-  }, [receipts]);
+  }, [receipts, granularity]);
 }
 
 function round2(n: number): number {
@@ -192,11 +238,11 @@ export function SpendingOverTimeChart({ stats }: { stats: DashboardStats }) {
     <Card>
       <CardHeader>
         <CardTitle>Spending over time</CardTitle>
-        <CardDescription>Last 12 months</CardDescription>
+        <CardDescription>{stats.rangeLabel}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={config} className="aspect-auto h-[260px] w-full">
-          <BarChart data={stats.monthly} accessibilityLayer>
+          <BarChart data={stats.series} accessibilityLayer>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="label"
@@ -213,7 +259,6 @@ export function SpendingOverTimeChart({ stats }: { stats: DashboardStats }) {
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  hideLabel={false}
                   formatter={(value) => fmtMoney(stats.currency, Number(value))}
                 />
               }

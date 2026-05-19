@@ -15,7 +15,7 @@ export const auth = createIsomorphicFn()
   .server(() =>
     initAuth({
       baseUrl: getBaseUrl(),
-      productionUrl: `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "turbo.t3.gg"}`,
+      productionUrl: `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "https://capibara-app-nextjs.vercel.app"}`,
       secret: env.AUTH_SECRET,
       extraPlugins: [tanstackStartCookies()],
     }),
